@@ -4,16 +4,19 @@ import { Platform } from 'react-native';
 // Configuration TikTok Login Kit depuis les variables d'environnement
 const TIKTOK_CLIENT_KEY = process.env.EXPO_PUBLIC_TIKTOK_CLIENT_ID || '';
 
-const DEFAULT_NEXTJS_CALLBACK = 'https://luma-post.emplica.fr/api/auth/tiktok/callback';
+const DEFAULT_FUNCTION_REDIRECT =
+  'https://us-central1-lumapost-38e61.cloudfunctions.net/tiktokCallback';
+const DEFAULT_WEB_REDIRECT = 'https://luma-post.emplica.fr/api/auth/tiktok/callback';
 
-// Utilise l'API Next.js qui existe déjà
-const MOBILE_REDIRECT_URI = DEFAULT_NEXTJS_CALLBACK;
+const MOBILE_REDIRECT_URI =
+  process.env.EXPO_PUBLIC_TIKTOK_MOBILE_REDIRECT_URI ||
+  DEFAULT_FUNCTION_REDIRECT;
 
 const WEB_REDIRECT_URI =
   process.env.EXPO_PUBLIC_TIKTOK_WEB_REDIRECT_URI ||
   process.env.NEXT_PUBLIC_TIKTOK_REDIRECT_URI ||
   process.env.EXPO_PUBLIC_TIKTOK_REDIRECT_URI ||
-  DEFAULT_NEXTJS_CALLBACK;
+  DEFAULT_WEB_REDIRECT;
 
 const TIKTOK_REDIRECT_URI =
   Platform.OS === 'ios' || Platform.OS === 'android' ? MOBILE_REDIRECT_URI : WEB_REDIRECT_URI;
