@@ -5,13 +5,9 @@ import { getStorage } from 'firebase-admin/storage';
 import { getAuth as getAdminAuth } from 'firebase-admin/auth';
 
 // Credentials Firebase Admin SDK (service account)
-const firebasePrivateKey = process.env.FIREBASE_PRIVATE_KEY
-  ?.replace(/^"|"$/g, '')
-  .replace(/\\n/g, '\n');
-
 const firebaseCredentials: ServiceAccount = {
   projectId: process.env.FIREBASE_PROJECT_ID || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID!,
-  privateKey: firebasePrivateKey!,
+  privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n')!,
   clientEmail: process.env.FIREBASE_CLIENT_EMAIL!
 };
 
