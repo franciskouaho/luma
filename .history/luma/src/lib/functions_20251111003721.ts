@@ -51,15 +51,10 @@ export const getTikTokSession = async (sessionToken: string) => {
   const sessionDocRef = firestore().collection("tiktok_sessions").doc(sessionToken);
   const sessionDoc = await sessionDocRef.get();
 
-  const sessionExists =
-    typeof sessionDoc.exists === "function"
-      ? sessionDoc.exists()
-      : sessionDoc.exists;
-
   console.log("[getTikTokSession] sessionToken:", sessionToken);
-  console.log("[getTikTokSession] sessionExists:", sessionExists);
+  console.log("[getTikTokSession] sessionDoc.exists:", sessionDoc.exists);
 
-  if (!sessionExists) {
+  if (!sessionDoc.exists) {
     console.log("[getTikTokSession] sessionDoc inexistant");
     throw new Error("Session not found or expired");
   }
