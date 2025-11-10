@@ -1,0 +1,48 @@
+{
+  "buildCommand": "yarn build",
+  "outputDirectory": ".next",
+  "framework": "nextjs",
+  "functions": {
+    "src/app/api/**/*.ts": {
+      "runtime": "nodejs18.x"
+    }
+  },
+  "env": {
+    "NEXT_PUBLIC_FIREBASE_API_KEY": "@firebase_api_key",
+    "NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN": "@firebase_auth_domain",
+    "NEXT_PUBLIC_FIREBASE_PROJECT_ID": "@firebase_project_id",
+    "NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET": "@firebase_storage_bucket",
+    "NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID": "@firebase_messaging_sender_id",
+    "NEXT_PUBLIC_FIREBASE_APP_ID": "@firebase_app_id",
+    "NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID": "@firebase_measurement_id",
+    "GCP_PROJECT": "@gcp_project",
+    "GCP_LOCATION": "@gcp_location",
+    "TASK_QUEUE": "@task_queue",
+    "PUBLISH_ENDPOINT": "@publish_endpoint",
+    "TASK_SA": "@task_sa",
+    "BUCKET_NAME": "@bucket_name",
+    "TIKTOK_CLIENT_ID": "@tiktok_client_id",
+    "TIKTOK_CLIENT_SECRET": "@tiktok_client_secret",
+    "TIKTOK_REDIRECT_URI": "@tiktok_redirect_uri",
+    "ENCRYPTION_KEY": "@encryption_key"
+  },
+  "headers": [
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
+        },
+        {
+          "key": "Access-Control-Allow-Methods",
+          "value": "GET, POST, PUT, DELETE, OPTIONS"
+        },
+        {
+          "key": "Access-Control-Allow-Headers",
+          "value": "Content-Type, Authorization"
+        }
+      ]
+    }
+  ]
+}

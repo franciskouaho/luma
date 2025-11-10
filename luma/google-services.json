@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "939156653935",
+    "project_id": "lumapost-38e61",
+    "storage_bucket": "lumapost-38e61.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:939156653935:android:79ccd836b9a8257fcb4a9a",
+        "android_client_info": {
+          "package_name": "com.emplica.luma"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "939156653935-3o5g8lt8mjl2sa1nb6lk1sqm6tjrhv8m.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDIqWo7Hq1MOizfs52Ne4lbwfv93vPjJgc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "939156653935-3o5g8lt8mjl2sa1nb6lk1sqm6tjrhv8m.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "939156653935-i6k2vf95pmn4dqkvjkoj3ottkq578cip.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.emplica.luma"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

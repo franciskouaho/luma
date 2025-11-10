@@ -1,0 +1,19 @@
+version: "3.9"
+
+services:
+  watermark-api:
+    build:
+      context: ./watermark
+      dockerfile: Dockerfile
+    container_name: sorawatermark-api
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./watermark/outputs:/app/outputs
+      - ./watermark/resources:/app/resources
+      - ${HOME}/.cache/sorawm:/root/.cache
+    environment:
+      - SORA_ALLOWED_ORIGINS=http://localhost:3000
+      - SORA_WORKER_CONCURRENCY=2
+    command: uv run python start_server.py --host 0.0.0.0 --port 8000
+

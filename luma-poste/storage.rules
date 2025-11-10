@@ -1,0 +1,66 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Règles pour les uploads de vidéos
+    match /uploads/{userId}/{allPaths=**} {
+      allow read, write: if request.auth != null 
+        && request.auth.uid == userId
+        && isValidVideoFile(request.resource);
+    }
+    
+    // Règles pour les miniatures
+    match /thumbs/{userId}/{allPaths=**} {
+      allow read, write: if request.auth != null 
+        && request.auth.uid == userId
+        && isValidImageFile(request.resource);
+    }
+    
+    // Règles pour les fichiers temporaires (suppression automatique après 24h)
+    match /temp/{userId}/{allPaths=**} {
+      allow read, write: if request.auth != null 
+        && request.auth.uid == userId
+        && isValidTempFile(request.resource);
+    }
+    
+    // Règles pour les fichiers de workspace (partagés entre membres)
+    match /workspaces/{workspaceId}/uploads/{userId}/{allPaths=**} {
+      allow read, write: if request.auth != null 
+        && request.auth.uid == userId
+        && isValidVideoFile(request.resource);
+    }
+    
+    match /workspaces/{workspaceId}/thumbs/{userId}/{allPaths=**} {
+      allow read, write: if request.auth != null 
+        && request.auth.uid == userId
+        && isValidImageFile(request.resource);
+    }
+    
+    // Règles pour les assets publics (logos, etc.)
+    match /public/{allPaths=**} {
+      allow read: if true;
+      allow write: if request.auth != null 
+        && request.auth.token.admin == true;
+    }
+    
+    // Règles par défaut - refuser tout le reste
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+  
+  // Fonctions utilitaires
+  function isValidVideoFile(resource) {
+    return resource.contentType.matches('video/.*') &&
+           resource.size <= 500 * 1024 * 1024; // 500MB max
+  }
+  
+  function isValidImageFile(resource) {
+    return resource.contentType.matches('image/.*') &&
+           resource.size <= 10 * 1024 * 1024; // 10MB max
+  }
+  
+  function isValidTempFile(resource) {
+    return resource.size <= 100 * 1024 * 1024; // 100MB max pour les fichiers temporaires
+  }
+  
+}

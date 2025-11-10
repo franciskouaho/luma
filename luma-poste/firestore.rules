@@ -1,0 +1,79 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Règles pour les utilisateurs
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Règles pour les workspaces
+    match /workspaces/{workspaceId} {
+      allow read, write: if request.auth != null && 
+        (resource.data.ownerId == request.auth.uid || 
+         exists(/databases/$(database)/documents/workspaceMembers/$(workspaceId + '_' + request.auth.uid)));
+    }
+    
+    // Règles pour les membres de workspace
+    match /workspaceMembers/{memberId} {
+      allow read, write: if request.auth != null && 
+        (resource.data.userId == request.auth.uid || 
+         exists(/databases/$(database)/documents/workspaces/$(resource.data.workspaceId)) &&
+         (get(/databases/$(database)/documents/workspaces/$(resource.data.workspaceId)).data.ownerId == request.auth.uid ||
+          exists(/databases/$(database)/documents/workspaceMembers/$(resource.data.workspaceId + '_' + request.auth.uid))));
+    }
+    
+    // Règles pour les vidéos
+    match /videos/{videoId} {
+      allow read, write: if request.auth != null && 
+        (resource.data.userId == request.auth.uid || 
+         (resource.data.workspaceId != null && 
+          exists(/databases/$(database)/documents/workspaceMembers/$(resource.data.workspaceId + '_' + request.auth.uid))));
+    }
+    
+    // Règles pour les brouillons
+    match /drafts/{draftId} {
+      allow read, write: if request.auth != null && 
+        (resource.data.userId == request.auth.uid || 
+         (resource.data.workspaceId != null && 
+          exists(/databases/$(database)/documents/workspaceMembers/$(resource.data.workspaceId + '_' + request.auth.uid))));
+    }
+    
+    // Règles pour les planifications
+    match /schedules/{scheduleId} {
+      allow read, write: if request.auth != null && 
+        (resource.data.userId == request.auth.uid || 
+         (resource.data.workspaceId != null && 
+          exists(/databases/$(database)/documents/workspaceMembers/$(resource.data.workspaceId + '_' + request.auth.uid))));
+    }
+    
+    // Règles pour les comptes TikTok
+    match /tiktokAccounts/{accountId} {
+      allow read, write: if request.auth != null && 
+        (resource.data.userId == request.auth.uid || 
+         (resource.data.workspaceId != null && 
+          exists(/databases/$(database)/documents/workspaceMembers/$(resource.data.workspaceId + '_' + request.auth.uid))));
+    }
+    
+    // Règles pour les posts
+    match /posts/{postId} {
+      allow read, write: if request.auth != null && 
+        (resource.data.userId == request.auth.uid || 
+         (resource.data.workspaceId != null && 
+          exists(/databases/$(database)/documents/workspaceMembers/$(resource.data.workspaceId + '_' + request.auth.uid))));
+    }
+    
+    // Règles pour les analytics
+    match /analytics/{analyticsId} {
+      allow read, write: if request.auth != null && 
+        (resource.data.userId == request.auth.uid || 
+         (resource.data.workspaceId != null && 
+          exists(/databases/$(database)/documents/workspaceMembers/$(resource.data.workspaceId + '_' + request.auth.uid))));
+    }
+    
+    // Règles par défaut - refuser tout le reste
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
