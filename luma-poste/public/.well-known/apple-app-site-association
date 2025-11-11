@@ -1,0 +1,14 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appID": "NAN7MFNMT7.com.emplica.luma",
+        "paths": [
+          "/auth/tiktok/callback",
+          "/api/auth/tiktok/callback"
+        ]
+      }
+    ]
+  }
+}
