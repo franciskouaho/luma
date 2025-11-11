@@ -38,20 +38,9 @@ export default function DiagnosticIntro() {
         setConnecting(true);
 
         try {
-          const mobileSessionToken =
-            session ?? (state?.startsWith("mobile_") ? state : undefined);
-
-          if (mobileSessionToken) {
-            const result = await getTikTokSession(mobileSessionToken);
-
-            if (result?.success) {
-              router.push("/onboarding/analysis-loading");
-              return;
-            }
-            throw new Error("Session TikTok invalide");
-          }
-
+          // Priorité 1 : Si on a un code, l'échanger directement (flux mobile direct)
           if (code) {
+            console.log("[DiagnosticIntro] Échange direct du code TikTok");
             const result = await exchangeTikTokCode(code);
 
             if (result.success) {
@@ -61,7 +50,22 @@ export default function DiagnosticIntro() {
             throw new Error("Échec de l'échange de code TikTok");
           }
 
-          throw new Error("Callback TikTok invalide (aucun token reçu)");
+          // Priorité 2 : Si on a un token de session (flux serveur Next.js)
+          const mobileSessionToken =
+            session ?? (state?.startsWith("mobile_") ? state : undefined);
+
+          if (mobileSessionToken) {
+            console.log("[DiagnosticIntro] Récupération session TikTok depuis Firestore");
+            const result = await getTikTokSession(mobileSessionToken);
+
+            if (result?.success) {
+              router.push("/onboarding/analysis-loading");
+              return;
+            }
+            throw new Error("Session TikTok invalide");
+          }
+
+          throw new Error("Callback TikTok invalide (aucun code ni session reçu)");
         } catch (callbackError: any) {
           console.error("Error connecting TikTok:", callbackError);
           Alert.alert(
