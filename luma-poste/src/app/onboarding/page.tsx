@@ -15,13 +15,13 @@ export default function OnboardingPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // Step 1: Workspace
+  // Step 1: Plan
+  const [selectedPlan, setSelectedPlan] = useState("professional");
+
+  // Step 2: Workspace
   const [workspaceName, setWorkspaceName] = useState("");
   const [workspaceType, setWorkspaceType] = useState("Personel");
   const [timezone, setTimezone] = useState("Paris (CET/CEST)");
-
-  // Step 2: Plan
-  const [selectedPlan, setSelectedPlan] = useState("professional");
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -36,13 +36,19 @@ export default function OnboardingPage() {
 
   const handleNextStep = () => {
     if (currentStep === 1) {
-      if (!workspaceName.trim()) {
-        setError("Veuillez entrer un nom de workspace");
+      // Vérifier qu'un plan est sélectionné
+      if (!selectedPlan) {
+        setError("Veuillez sélectionner un plan");
         return;
       }
       setError("");
       setCurrentStep(2);
     } else if (currentStep === 2) {
+      if (!workspaceName.trim()) {
+        setError("Veuillez entrer un nom de workspace");
+        return;
+      }
+      setError("");
       handleComplete();
     }
   };
@@ -238,94 +244,6 @@ export default function OnboardingPage() {
       <main className="flex-1 flex items-center justify-center px-4 py-6">
         <div className="w-full max-w-7xl">
           {currentStep === 1 && (
-            <div className="text-center">
-              {/* Icon */}
-              <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-6" style={{ backgroundColor: '#9B6BFF' }}>
-                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h4a1 1 0 011 1v7a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v7a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 16a1 1 0 011-1h4a1 1 0 011 1v3a1 1 0 01-1 1H5a1 1 0 01-1-1v-3zM14 16a1 1 0 011-1h4a1 1 0 011 1v3a1 1 0 01-1 1h-4a1 1 0 01-1-1v-3z" />
-                </svg>
-              </div>
-
-              <h1 className="text-3xl font-bold text-gray-900 mb-3">
-                Créez votre workspace
-              </h1>
-              <p className="text-gray-600 mb-8">
-                Quelques informations pour commencer
-              </p>
-
-              {/* Form */}
-              <div className="space-y-6 text-left">
-                {/* Workspace Name */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Nom du workspace
-                  </label>
-                  <input
-                    type="text"
-                    value={workspaceName}
-                    onChange={(e) => setWorkspaceName(e.target.value)}
-                    placeholder={user?.displayName || "Mon Workspace"}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                  />
-                </div>
-
-                {/* Workspace Type */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Type de workspace
-                  </label>
-                  <select
-                    value={workspaceType}
-                    onChange={(e) => setWorkspaceType(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent appearance-none cursor-pointer"
-                  >
-                    <option value="Personel">Personnel</option>
-                    <option value="Equipe">Équipe</option>
-                    <option value="Agence">Agence</option>
-                  </select>
-                </div>
-
-                {/* Timezone */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    <span className="inline-flex items-center gap-2">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      Fuseau horaire
-                    </span>
-                  </label>
-                  <p className="text-xs text-gray-500 mb-2">
-                    Détecté automatiquement : Paris (CET/CEST)
-                  </p>
-                  <select
-                    value={timezone}
-                    onChange={(e) => setTimezone(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent appearance-none cursor-pointer"
-                  >
-                    <option value="Paris (CET/CEST)">Paris (CET/CEST)</option>
-                    <option value="London (GMT/BST)">London (GMT/BST)</option>
-                    <option value="New York (EST/EDT)">New York (EST/EDT)</option>
-                    <option value="Los Angeles (PST/PDT)">Los Angeles (PST/PDT)</option>
-                    <option value="Tokyo (JST)">Tokyo (JST)</option>
-                  </select>
-                  <p className="text-xs text-gray-500 mt-2">
-                    Les dates des posts planifiés seront affichées selon ce fuseau horaire
-                  </p>
-                </div>
-
-                {error && (
-                  <p className="text-sm text-red-600">{error}</p>
-                )}
-              </div>
-
-              <p className="text-sm text-gray-500 mt-8">
-                Étape {currentStep} sur {totalSteps} - Suivant : Choisissez votre plan
-              </p>
-            </div>
-          )}
-
-          {currentStep === 2 && (
             <div>
               <div className="text-center mb-4">
                 <h1 className="text-3xl font-bold text-gray-900 mb-4">
@@ -430,11 +348,104 @@ export default function OnboardingPage() {
                 ))}
               </div>
 
+              {error && (
+                <p className="text-sm text-red-600 text-center mb-4">{error}</p>
+              )}
+
               <p className="text-sm text-gray-500 text-center">
+                Étape {currentStep} sur {totalSteps} - Suivant : Créez votre workspace
+              </p>
+            </div>
+          )}
+
+          {currentStep === 2 && (
+            <div className="text-center">
+              {/* Icon */}
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-6" style={{ backgroundColor: '#9B6BFF' }}>
+                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h4a1 1 0 011 1v7a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v7a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 16a1 1 0 011-1h4a1 1 0 011 1v3a1 1 0 01-1 1H5a1 1 0 01-1-1v-3zM14 16a1 1 0 011-1h4a1 1 0 011 1v3a1 1 0 01-1 1h-4a1 1 0 01-1-1v-3z" />
+                </svg>
+              </div>
+
+              <h1 className="text-3xl font-bold text-gray-900 mb-3">
+                Créez votre workspace
+              </h1>
+              <p className="text-gray-600 mb-8">
+                Quelques informations pour commencer
+              </p>
+
+              {/* Form */}
+              <div className="space-y-6 text-left">
+                {/* Workspace Name */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Nom du workspace
+                  </label>
+                  <input
+                    type="text"
+                    value={workspaceName}
+                    onChange={(e) => setWorkspaceName(e.target.value)}
+                    placeholder={user?.displayName || "Mon Workspace"}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#9B6BFF] focus:border-transparent"
+                  />
+                </div>
+
+                {/* Workspace Type */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Type de workspace
+                  </label>
+                  <select
+                    value={workspaceType}
+                    onChange={(e) => setWorkspaceType(e.target.value)}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#9B6BFF] focus:border-transparent appearance-none cursor-pointer"
+                  >
+                    <option value="Personel">Personnel</option>
+                    <option value="Equipe">Équipe</option>
+                    <option value="Agence">Agence</option>
+                  </select>
+                </div>
+
+                {/* Timezone */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <span className="inline-flex items-center gap-2">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      Fuseau horaire
+                    </span>
+                  </label>
+                  <p className="text-xs text-gray-500 mb-2">
+                    Détecté automatiquement : Paris (CET/CEST)
+                  </p>
+                  <select
+                    value={timezone}
+                    onChange={(e) => setTimezone(e.target.value)}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#9B6BFF] focus:border-transparent appearance-none cursor-pointer"
+                  >
+                    <option value="Paris (CET/CEST)">Paris (CET/CEST)</option>
+                    <option value="London (GMT/BST)">London (GMT/BST)</option>
+                    <option value="New York (EST/EDT)">New York (EST/EDT)</option>
+                    <option value="Los Angeles (PST/PDT)">Los Angeles (PST/PDT)</option>
+                    <option value="Tokyo (JST)">Tokyo (JST)</option>
+                  </select>
+                  <p className="text-xs text-gray-500 mt-2">
+                    Les dates des posts planifiés seront affichées selon ce fuseau horaire
+                  </p>
+                </div>
+
+                {error && (
+                  <p className="text-sm text-red-600">{error}</p>
+                )}
+              </div>
+
+              <p className="text-sm text-gray-500 mt-8">
                 Étape {currentStep} sur {totalSteps} - Suivant : Finalisation
               </p>
             </div>
           )}
+
 
           {/* Navigation Buttons */}
           <div className="flex justify-between items-center mt-6">

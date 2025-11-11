@@ -2,7 +2,8 @@
 
 import { useState, useEffect, FormEvent } from "react";
 import { Check } from "lucide-react";
-import { collection, addDoc, serverTimestamp, getCountFromServer } from "firebase/firestore";
+import Image from "next/image";
+import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "@/lib/firebaseClient";
 
 export default function WaitlistPage() {
@@ -17,9 +18,11 @@ export default function WaitlistPage() {
   useEffect(() => {
     const fetchSignupsCount = async () => {
       try {
-        const waitlistRef = collection(db, "waitlist");
-        const snapshot = await getCountFromServer(waitlistRef);
-        setSignupsCount(snapshot.data().count);
+        const response = await fetch("/api/waitlist/count");
+        const data = await response.json();
+        if (data.success) {
+          setSignupsCount(data.count);
+        }
       } catch (err) {
         console.error("Erreur lors du chargement du compteur:", err);
         // Garder la valeur par défaut en cas d'erreur
@@ -76,8 +79,14 @@ export default function WaitlistPage() {
           <div className="flex items-center justify-between">
             {/* Logo */}
             <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#9B6BFF' }}>
-                <span className="text-white font-bold text-lg">L</span>
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center overflow-hidden">
+                <Image
+                  src="/assets/logo/logo.png"
+                  alt="LumaPost Logo"
+                  width={32}
+                  height={32}
+                  className="object-contain"
+                />
               </div>
               <span className="text-xl font-semibold text-gray-900">LumaPost</span>
             </div>
@@ -245,8 +254,14 @@ export default function WaitlistPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="flex items-center space-x-2">
-              <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#9B6BFF' }}>
-                <span className="text-white font-bold text-sm">L</span>
+              <div className="w-6 h-6 rounded-lg flex items-center justify-center overflow-hidden">
+                <Image
+                  src="/assets/logo/logo.png"
+                  alt="LumaPost Logo"
+                  width={24}
+                  height={24}
+                  className="object-contain"
+                />
               </div>
               <span className="text-sm font-semibold text-gray-900">LumaPost</span>
             </div>

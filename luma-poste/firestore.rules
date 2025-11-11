@@ -90,7 +90,8 @@ service cloud.firestore {
       allow create: if request.resource.data.keys().hasAll(['firstName', 'email', 'createdAt']) &&
                        request.resource.data.firstName is string &&
                        request.resource.data.email is string &&
-                       request.resource.data.email.matches('.*@.*');
+                       request.resource.data.email.matches('.*@.*') &&
+                       (!('source' in request.resource.data) || request.resource.data.source is string);
       // Seuls les admins peuvent lire/modifier/supprimer (via Admin SDK)
       allow read, update, delete: if false;
     }
