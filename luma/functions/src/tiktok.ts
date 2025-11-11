@@ -171,7 +171,24 @@ export const exchangeTikTokCode = functions.https.onCall(
  */
 async function fetchTikTokUserInfo(accessToken: string) {
   try {
-    const response = await fetch("https://open.tiktokapis.com/v2/user/info/", {
+    // L'API TikTok exige maintenant le paramètre 'fields' pour spécifier les champs à récupérer
+    const fields = [
+      "open_id",
+      "avatar_url",
+      "display_name",
+      "username",
+      "follower_count",
+      "following_count",
+      "likes_count",
+      "video_count",
+      "bio_description",
+      "is_verified",
+    ].join(",");
+
+    const url = new URL("https://open.tiktokapis.com/v2/user/info/");
+    url.searchParams.append("fields", fields);
+
+    const response = await fetch(url.toString(), {
       method: "GET",
       headers: {
         Authorization: `Bearer ${accessToken}`,
@@ -186,6 +203,12 @@ async function fetchTikTokUserInfo(accessToken: string) {
       return null;
     }
 
+    console.log("TikTok user info success:", {
+      hasDisplayName: !!data.data?.user?.display_name,
+      hasUsername: !!data.data?.user?.username,
+      hasAvatar: !!data.data?.user?.avatar_url,
+    });
+
     return {
       displayName: data.data?.user?.display_name || null,
       username: data.data?.user?.username || null,
@@ -194,6 +217,8 @@ async function fetchTikTokUserInfo(accessToken: string) {
       followingCount: data.data?.user?.following_count || 0,
       likesCount: data.data?.user?.likes_count || 0,
       videoCount: data.data?.user?.video_count || 0,
+      bioDescription: data.data?.user?.bio_description || null,
+      isVerified: data.data?.user?.is_verified || false,
     };
   } catch (error) {
     console.error("Error fetching TikTok user info:", error);

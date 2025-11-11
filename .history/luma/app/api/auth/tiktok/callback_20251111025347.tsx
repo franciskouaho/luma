@@ -18,8 +18,11 @@ export default function TikTokCallbackScreen() {
   const params = useLocalSearchParams();
 
   useEffect(() => {
-    const handleCallback = async () => {
-      try {
+    handleCallback();
+  }, []);
+
+  async function handleCallback() {
+    try {
       const code = Array.isArray(params.code) ? params.code[0] : params.code;
       const state = Array.isArray(params.state) ? params.state[0] : params.state;
       const error = Array.isArray(params.error) ? params.error[0] : params.error;
@@ -45,17 +48,14 @@ export default function TikTokCallbackScreen() {
       }
 
       throw new Error('Échec de l\'échange de code');
-      } catch (error) {
-        console.error('[NOUVEAU CALLBACK] ❌ Erreur:', error);
-        router.replace({
-          pathname: '/(tabs)/profile',
-          params: { tiktokError: error instanceof Error ? error.message : 'Échec de la connexion' }
-        });
-      }
-    };
-
-    void handleCallback();
-  }, [params, router]);
+    } catch (error) {
+      console.error('[NOUVEAU CALLBACK] ❌ Erreur:', error);
+      router.replace({
+        pathname: '/(tabs)/profile',
+        params: { tiktokError: error instanceof Error ? error.message : 'Échec de la connexion' }
+      });
+    }
+  }
 
   return (
     <View style={styles.container}>

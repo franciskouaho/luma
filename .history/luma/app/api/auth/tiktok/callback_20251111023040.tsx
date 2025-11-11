@@ -11,7 +11,7 @@ type TikTokSessionResult = {
 };
 
 /**
- * Page de callback TikTok
+ * Page de callback TikTok (route alternative)
  * Cette page est ouverte quand TikTok redirige après l'authentification via Firebase Function
  */
 export default function TikTokCallbackScreen() {
@@ -48,8 +48,9 @@ export default function TikTokCallbackScreen() {
       // Récupérer le session token (nouveau) ou le code (ancien pour compatibilité)
       const stateParam = resolvedParams.state;
       const sessionToken =
-        resolvedParams.session ??
-        (stateParam?.startsWith("mobile_") ? stateParam : undefined);
+        typeof resolvedParams.session === "string"
+          ? resolvedParams.session
+          : undefined;
       const codeParam = resolvedParams.code;
       const errorParam = resolvedParams.error;
 
@@ -67,45 +68,50 @@ export default function TikTokCallbackScreen() {
         throw new Error(decodeURIComponent(errorParam));
       }
 
-      if (!sessionToken) {
-        console.warn("[TikTokCallbackScreen] Token de session manquant, tentative fallback avec code.");
+      // Priorité au flux direct avec échange de code
+      if (codeParam) {
+        try {
+          const result: TikTokSessionResult = await exchangeTikTokCode(codeParam);
+          console.log("[TikTokCallbackScreen] Exchange code résultat:", result);
 
-        if (codeParam) {
-          try {
-            const result: TikTokSessionResult = await exchangeTikTokCode(codeParam);
-            console.log("[TikTokCallbackScreen] Fallback exchange code résultat:", result);
+          if (result?.success) {
+            router.replace({
+              pathname: '/(tabs)/profile',
+              params: { tiktokConnected: 'true' }
+            });
+            return;
+          }
+          console.warn("[TikTokCallbackScreen] Exchange code sans succès, tentative session...");
+        } catch (exchangeError) {
+          console.error("[TikTokCallbackScreen] Exchange code erreur:", exchangeError);
 
-            if (result?.success) {
-              router.replace({
-                pathname: '/(tabs)/profile',
-                params: { tiktokConnected: 'true' }
-              });
-              return;
-            }
-          } catch (fallbackError) {
-            console.error("[TikTokCallbackScreen] Fallback exchange code erreur:", fallbackError);
+          if (!sessionToken) {
+            throw exchangeError;
           }
         }
-
-        throw new Error('Token de session manquant');
       }
 
-      console.log('TikTok callback received with session token, récupération via getTikTokSession...');
+      if (sessionToken) {
+        console.log('TikTok callback received with session token, récupération via getTikTokSession...');
 
-      // Appeler la Cloud Function pour récupérer et sauvegarder la session
-      const result: TikTokSessionResult = await getTikTokSession(sessionToken);
+        // Appeler la Cloud Function pour récupérer et sauvegarder la session
+        const result: TikTokSessionResult = await getTikTokSession(sessionToken);
 
-      console.log('TikTok auth successful:', result);
+        console.log('TikTok auth successful:', result);
 
-      if (!result?.success) {
-        throw new Error('Impossible de valider la session TikTok');
+        if (!result?.success) {
+          throw new Error('Impossible de valider la session TikTok');
+        }
+
+        // Rediriger vers le profil avec un message de succès
+        router.replace({
+          pathname: '/(tabs)/profile',
+          params: { tiktokConnected: 'true' }
+        });
+        return;
       }
 
-      // Rediriger vers le profil avec un message de succès
-      router.replace({
-        pathname: '/(tabs)/profile',
-        params: { tiktokConnected: 'true' }
-      });
+      throw new Error('Ni code TikTok ni token de session fournis');
     } catch (error) {
       console.error('TikTok callback error:', error);
 

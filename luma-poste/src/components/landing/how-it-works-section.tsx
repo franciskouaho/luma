@@ -1,88 +1,94 @@
 "use client";
 
-import { UserPlus, Edit3, Calendar, Rocket } from "lucide-react";
+import { Link2, Zap, Rocket } from "lucide-react";
 
 export default function HowItWorksSection() {
   const steps = [
     {
-      icon: <UserPlus className="w-10 h-10" />,
+      icon: Link2,
       number: "01",
-      title: "Connect Your Accounts",
-      description: "Link all your social media platforms in minutes. We support 9 major platforms including Instagram, TikTok, LinkedIn, and more."
+      title: "Connectez vos comptes",
+      description: "Associez vos comptes TikTok, Instagram, LinkedIn, X, et YouTube. Chaque connexion est sécurisée avec une API officielle des plateformes pour protéger vos données.",
+      features: [
+        "6 plateformes à connecter",
+        "Connexion sécurisée",
+        "API officielle garantie"
+      ]
     },
     {
-      icon: <Edit3 className="w-10 h-10" />,
+      icon: Zap,
       number: "02",
-      title: "Create Your Content",
-      description: "Use our intuitive content studio to craft engaging posts. Add images, videos, and customize for each platform or post everywhere at once."
+      title: "Rédigez votre publication",
+      description: "Écrivez votre contenu avec notre éditeur qui s'adapte à chaque réseau social. LumaPost enrichit vos publications avec vos médias Google Drive ou choisissez des visuels dans nos banques d'images gratuites.",
+      features: [
+        "IA booste vos idées de contenu",
+        "Recommandations par l'IA",
+        "Import Google Drive + banques d'images libres"
+      ]
     },
     {
-      icon: <Calendar className="w-10 h-10" />,
+      icon: Rocket,
       number: "03",
-      title: "Schedule or Publish",
-      description: "Choose to publish immediately or schedule for later. Our smart scheduling suggests the best times for maximum engagement."
-    },
-    {
-      icon: <Rocket className="w-10 h-10" />,
-      number: "04",
-      title: "Track Performance",
-      description: "Monitor your posts' performance with detailed analytics. See what works and optimize your content strategy."
+      title: "Publiez partout",
+      description: "Diffusez tout de suite ou planifiez vos publications. Notre IA analyse vos performances passées et vous indique les créneaux optimaux pour toucher un maximum de personnes sur chaque réseau.",
+      features: [
+        "Publication instantanée ou planifiée",
+        "Toucher les meilleurs horaires",
+        "Programmation récurrente"
+      ]
     }
   ];
 
   return (
-    <section id="how-it-works" className="py-20 bg-gradient-to-br from-gray-50 to-white">
+    <section id="how-it-works" className="py-20 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
-        <div className="text-center mb-16">
-          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
-            How{" "}
-            <span className="text-purple-600">Luma Post</span>
-            {" "}Works
-          </h2>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Get started in minutes and streamline your social media management
+        <div className="text-center mb-4">
+          <p className="text-sm font-semibold uppercase tracking-wide mb-2" style={{ color: '#9B6BFF' }}>
+            Processus simplifié
           </p>
+          <h2 className="text-4xl md:text-5xl font-bold text-gray-900">
+            En <span style={{ color: '#9B6BFF' }}>3 étapes simples</span>
+          </h2>
         </div>
 
         {/* Steps */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 relative">
-          {/* Connection Lines (hidden on mobile) */}
-          <div className="hidden lg:block absolute top-24 left-0 right-0 h-0.5 bg-gradient-to-r from-purple-200 via-purple-400 to-purple-200" style={{ top: '3rem' }}></div>
-          
-          {steps.map((step, index) => (
-            <div key={index} className="relative">
-              {/* Step Card */}
-              <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-lg hover:shadow-2xl hover:border-purple-300 transition-all duration-300 hover:-translate-y-2">
-                {/* Number Badge */}
-                <div className="absolute -top-4 -right-4 w-12 h-12 bg-gradient-to-r from-purple-600 to-purple-700 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-lg">
-                  {step.number}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-16">
+          {steps.map((step, index) => {
+            const Icon = step.icon;
+            return (
+              <div
+                key={index}
+                className={`relative ${index === 2 ? 'border-2' : 'border'} ${index === 2 ? 'border-purple-300' : 'border-gray-200'} rounded-2xl p-8 bg-white hover:shadow-lg transition-all`}
+              >
+                {/* Step Number & Icon */}
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-4">
+                    <div className="w-16 h-16 rounded-full flex items-center justify-center" style={{ backgroundColor: index === 2 ? '#9B6BFF' : '#F3F4F6' }}>
+                      <Icon className="w-8 h-8" style={{ color: index === 2 ? 'white' : '#9B6BFF' }} />
+                    </div>
+                  </div>
+                  <div className="text-7xl font-bold opacity-10" style={{ color: '#9B6BFF' }}>
+                    {step.number}
+                  </div>
                 </div>
-                
-                {/* Icon */}
-                <div className="w-16 h-16 bg-gradient-to-r from-purple-100 to-purple-200 rounded-xl flex items-center justify-center text-purple-600 mb-6">
-                  {step.icon}
-                </div>
-                
-                {/* Content */}
-                <h3 className="text-xl font-bold text-gray-900 mb-3">{step.title}</h3>
-                <p className="text-gray-600 leading-relaxed">{step.description}</p>
-              </div>
-            </div>
-          ))}
-        </div>
 
-        {/* CTA */}
-        <div className="text-center mt-16">
-          <a
-            href="/auth"
-            className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white px-8 py-4 text-lg font-semibold rounded-lg transition-all duration-300 hover:shadow-lg hover:shadow-purple-500/30 hover:scale-105"
-          >
-            Get Started Now
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-            </svg>
-          </a>
+                {/* Content */}
+                <h3 className="text-2xl font-bold text-gray-900 mb-3">{step.title}</h3>
+                <p className="text-gray-600 leading-relaxed mb-6">{step.description}</p>
+
+                {/* Features List */}
+                <ul className="space-y-2">
+                  {step.features.map((feature, idx) => (
+                    <li key={idx} className="flex items-start gap-2 text-sm text-gray-600">
+                      <div className="w-1.5 h-1.5 rounded-full mt-1.5 flex-shrink-0" style={{ backgroundColor: '#9B6BFF' }}></div>
+                      <span>{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            );
+          })}
         </div>
       </div>
     </section>

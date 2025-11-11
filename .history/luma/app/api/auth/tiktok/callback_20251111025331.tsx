@@ -4,12 +4,6 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { colors } from '@/src/theme/colors';
 import { exchangeTikTokCode } from '@/src/lib/functions';
 
-type ExchangeResult = {
-  success?: boolean;
-  expiresIn?: number;
-  userInfo?: unknown;
-};
-
 /**
  * NOUVEAU CODE SIMPLIFIÉ - Page de callback TikTok
  */
@@ -18,8 +12,11 @@ export default function TikTokCallbackScreen() {
   const params = useLocalSearchParams();
 
   useEffect(() => {
-    const handleCallback = async () => {
-      try {
+    handleCallback();
+  }, []);
+
+  async function handleCallback() {
+    try {
       const code = Array.isArray(params.code) ? params.code[0] : params.code;
       const state = Array.isArray(params.state) ? params.state[0] : params.state;
       const error = Array.isArray(params.error) ? params.error[0] : params.error;
@@ -36,7 +33,7 @@ export default function TikTokCallbackScreen() {
 
       // TOUJOURS échanger le code directement
       console.log('[NOUVEAU CALLBACK] Échange du code TikTok...');
-      const result = (await exchangeTikTokCode(code)) as ExchangeResult;
+      const result = await exchangeTikTokCode(code);
 
       if (result?.success) {
         console.log('[NOUVEAU CALLBACK] ✅ Succès ! Redirection...');
@@ -45,17 +42,14 @@ export default function TikTokCallbackScreen() {
       }
 
       throw new Error('Échec de l\'échange de code');
-      } catch (error) {
-        console.error('[NOUVEAU CALLBACK] ❌ Erreur:', error);
-        router.replace({
-          pathname: '/(tabs)/profile',
-          params: { tiktokError: error instanceof Error ? error.message : 'Échec de la connexion' }
-        });
-      }
-    };
-
-    void handleCallback();
-  }, [params, router]);
+    } catch (error) {
+      console.error('[NOUVEAU CALLBACK] ❌ Erreur:', error);
+      router.replace({
+        pathname: '/(tabs)/profile',
+        params: { tiktokError: error instanceof Error ? error.message : 'Échec de la connexion' }
+      });
+    }
+  }
 
   return (
     <View style={styles.container}>

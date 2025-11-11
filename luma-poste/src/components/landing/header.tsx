@@ -11,39 +11,44 @@ export default function LandingHeader() {
   return (
     <header className="sticky top-0 z-50 w-full bg-white/95 backdrop-blur-sm border-b border-gray-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center py-5">
+        <div className="flex justify-between items-center py-4">
           {/* Logo */}
           <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 rounded-full flex items-center justify-center bg-gray-900">
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#9B6BFF' }}>
               <span className="text-white font-bold text-lg">L</span>
             </div>
-            <span className="text-lg font-medium text-gray-900">luma post</span>
+            <span className="text-lg font-semibold text-gray-900">lumapost</span>
           </div>
 
           {/* Navigation */}
-          <nav className="hidden md:flex items-center space-x-6">
-            <Link href="#pricing" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
-              Pricing
+          <nav className="hidden md:flex items-center space-x-8">
+            <Link href="#features" className="text-sm text-gray-700 hover:text-gray-900 transition-colors font-medium">
+              Fonctionnalités
             </Link>
-            <Link href="#testimonials" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
-              Reviews
+            <Link href="#platforms" className="text-sm text-gray-700 hover:text-gray-900 transition-colors font-medium">
+              Plateformes
             </Link>
-            <Link href="#features" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
-              Features
+            <Link href="#pricing" className="text-sm text-gray-700 hover:text-gray-900 transition-colors font-medium">
+              Tarifs
             </Link>
-            <Link href="#platforms" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
-              Platforms
-            </Link>
-            <Link href="#faq" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
+            <Link href="#faq" className="text-sm text-gray-700 hover:text-gray-900 transition-colors font-medium">
               FAQ
+            </Link>
+            <Link href="/blog" className="text-sm text-gray-700 hover:text-gray-900 transition-colors font-medium">
+              Blog
             </Link>
           </nav>
 
-          {/* Login Button */}
-          <div className="hidden md:flex items-center">
+          {/* Auth Buttons */}
+          <div className="hidden md:flex items-center gap-3">
             <Link href="/auth">
-              <Button className="bg-white text-gray-900 border border-gray-200 hover:bg-gray-50 rounded-lg px-6 py-2 text-sm font-medium transition-colors">
-                Login
+              <Button variant="ghost" className="text-gray-700 hover:text-gray-900 text-sm font-medium">
+                Se connecter
+              </Button>
+            </Link>
+            <Link href="/auth">
+              <Button className="text-white text-sm font-medium px-6 py-2 rounded-lg transition-all hover:opacity-90" style={{ backgroundColor: '#9B6BFF' }}>
+                S&apos;inscrire
               </Button>
             </Link>
           </div>
@@ -63,25 +68,30 @@ export default function LandingHeader() {
         {isMenuOpen && (
           <div className="md:hidden py-4 border-t border-gray-100">
             <nav className="flex flex-col space-y-4">
-              <Link href="#pricing" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
-                Pricing
-              </Link>
-              <Link href="#testimonials" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
-                Reviews
-              </Link>
               <Link href="#features" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
-                Features
+                Fonctionnalités
               </Link>
               <Link href="#platforms" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
-                Platforms
+                Plateformes
+              </Link>
+              <Link href="#pricing" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
+                Tarifs
               </Link>
               <Link href="#faq" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
                 FAQ
               </Link>
-              <div className="pt-4">
+              <Link href="/blog" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
+                Blog
+              </Link>
+              <div className="pt-4 flex flex-col gap-2">
                 <Link href="/auth">
-                  <Button className="bg-white text-gray-900 border border-gray-200 hover:bg-gray-50 rounded-lg px-6 py-2 text-sm font-medium transition-colors w-full">
-                    Login
+                  <Button variant="ghost" className="w-full">
+                    Se connecter
+                  </Button>
+                </Link>
+                <Link href="/auth">
+                  <Button className="w-full" style={{ backgroundColor: '#9B6BFF', color: 'white' }}>
+                    S&apos;inscrire
                   </Button>
                 </Link>
               </div>

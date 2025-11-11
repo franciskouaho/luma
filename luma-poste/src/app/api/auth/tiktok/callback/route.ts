@@ -302,7 +302,7 @@ async function handleMobileCallback({
       sessionToken,
     });
 
-    return buildMobileRedirectResponse({ sessionToken });
+    return redirectToMobileApp(sessionToken);
   } catch (err) {
     console.error("❌ Erreur dans handleMobileCallback:", err);
 
@@ -318,6 +318,22 @@ async function handleMobileCallback({
 interface MobileRedirectParams {
   sessionToken?: string;
   errorMessage?: string;
+}
+
+function redirectToMobileApp(sessionToken: string): NextResponse {
+  const customSchemeUrl = `${MOBILE_CUSTOM_SCHEME}?session=${encodeURIComponent(
+    sessionToken,
+  )}`;
+  const universalLinkUrl = `${MOBILE_UNIVERSAL_LINK}?session=${encodeURIComponent(
+    sessionToken,
+  )}`;
+
+  const response = NextResponse.redirect(customSchemeUrl, { status: 307 });
+  response.headers.set("Cache-Control", "no-store");
+  response.headers.set("X-Content-Type-Options", "nosniff");
+  response.headers.append("Link", `<${universalLinkUrl}>; rel="alternate"`);
+
+  return response;
 }
 
 function buildMobileRedirectResponse({

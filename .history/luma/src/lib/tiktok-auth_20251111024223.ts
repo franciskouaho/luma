@@ -46,8 +46,6 @@ export function getTikTokAuthUrl(): string {
     response_type: 'code',
     redirect_uri: TIKTOK_REDIRECT_URI,
     state,
-    prompt: 'consent',
-    force_verify: '1',
   });
   params.set('prompt', 'consent');
   params.set('force_verify', '1');
