@@ -95,6 +95,14 @@ service cloud.firestore {
       allow read, update, delete: if false;
     }
 
+    // Règles pour les abonnements (subscriptions)
+    match /subscriptions/{subscriptionId} {
+      // Les utilisateurs peuvent lire leurs propres abonnements
+      allow read: if request.auth != null && resource.data.userId == request.auth.uid;
+      // Seuls les webhooks (via Admin SDK) peuvent créer/modifier
+      allow create, update, delete: if false;
+    }
+
     // Règles par défaut - refuser tout le reste
     match /{document=**} {
       allow read, write: if false;

@@ -62,6 +62,7 @@ export default function OnboardingPage() {
         timezone: timezone,
         ownerId: user.uid,
         plan: selectedPlan,
+        paymentStatus: "pending",
         createdAt: serverTimestamp(),
         settings: {
           allowMemberInvites: true,
@@ -75,11 +76,51 @@ export default function OnboardingPage() {
       await setDoc(userRef, {
         onboardingCompleted: true,
         workspaceId: `${user.uid}_default`,
+        plan: selectedPlan,
+        subscriptionStatus: "pending",
         completedAt: serverTimestamp()
       }, { merge: true });
 
-      // Rediriger vers le dashboard
-      router.push("/dashboard");
+      // Récupérer l'ID token pour l'authentification API
+      const idToken = await user.getIdToken();
+
+      // Obtenir le variant ID selon le plan sélectionné
+      const variantIds: Record<string, string> = {
+        starter: process.env.NEXT_PUBLIC_LS_STARTER_VARIANT_ID || "",
+        professional: process.env.NEXT_PUBLIC_LS_PRO_VARIANT_ID || "",
+        premium: process.env.NEXT_PUBLIC_LS_PREMIUM_VARIANT_ID || "",
+      };
+
+      const variantId = variantIds[selectedPlan];
+
+      if (!variantId) {
+        setError("Plan non configuré");
+        setLoading(false);
+        return;
+      }
+
+      // Créer le checkout Lemon Squeezy
+      const response = await fetch("/api/checkout", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${idToken}`,
+        },
+        body: JSON.stringify({
+          variantId: variantId,
+          plan: selectedPlan,
+          workspaceName: workspaceName,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to create checkout");
+      }
+
+      const { checkoutUrl } = await response.json();
+
+      // Rediriger vers Lemon Squeezy checkout
+      window.location.href = checkoutUrl;
     } catch (err) {
       console.error("Error completing onboarding:", err);
       setError("Une erreur est survenue. Réessayez.");
@@ -106,7 +147,7 @@ export default function OnboardingPage() {
       id: "starter",
       name: "Starter",
       subtitle: "Base solide pour débuter sereinement",
-      price: "12€",
+      price: "12,99€",
       period: "/mois",
       popular: false,
       features: [
@@ -124,7 +165,7 @@ export default function OnboardingPage() {
       id: "professional",
       name: "Pro",
       subtitle: "Outils IA avancés pour les entreprises et équipes",
-      price: "29€",
+      price: "29,99€",
       period: "/mois",
       popular: true,
       badge: "Meilleure offre",
@@ -144,7 +185,7 @@ export default function OnboardingPage() {
       id: "premium",
       name: "Premium",
       subtitle: "Tout illimité + priorités et SLA",
-      price: "89€",
+      price: "89,99€",
       period: "/mois",
       popular: false,
       features: [

@@ -8,7 +8,7 @@ export default function OnePostPricingSection() {
     {
       name: "Starter",
       subtitle: "Parfait pour démarrer votre présence en ligne",
-      price: "€12",
+      price: "€12,99",
       period: "/mois",
       popular: false,
       features: [
@@ -25,7 +25,7 @@ export default function OnePostPricingSection() {
     {
       name: "Professional",
       subtitle: "Pour les entreprises qui veulent se développer",
-      price: "€29",
+      price: "€29,99",
       period: "/mois",
       popular: true,
       features: [
@@ -43,7 +43,7 @@ export default function OnePostPricingSection() {
     {
       name: "Enterprise",
       subtitle: "Solution complète pour les grandes équipes",
-      price: "€89",
+      price: "€89,99",
       period: "/mois",
       popular: false,
       badge: "Meilleure offre",
