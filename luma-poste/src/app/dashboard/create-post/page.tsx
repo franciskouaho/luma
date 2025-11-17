@@ -51,7 +51,7 @@ export default function DashboardPage() {
         { name: "LinkedIn", icon: Linkedin, color: "text-blue-700" },
         { name: "Instagram", icon: Instagram, color: "text-pink-500" },
       ],
-      isAvailable: true,
+      isAvailable: false, // Grisé - seul Video Post est disponible
     },
     {
       id: "image",
@@ -68,7 +68,7 @@ export default function DashboardPage() {
         { name: "Twitter", icon: Twitter, color: "text-blue-500" },
         { name: "LinkedIn", icon: Linkedin, color: "text-blue-700" },
       ],
-      isAvailable: true,
+      isAvailable: false, // Grisé - seul Video Post est disponible
     },
     {
       id: "video",
@@ -84,7 +84,7 @@ export default function DashboardPage() {
         { name: "Instagram", icon: Instagram, color: "text-pink-500" },
         { name: "TikTok", icon: TikTokIcon, color: "text-black" },
       ],
-      isAvailable: true,
+      isAvailable: true, // Seul Video Post est disponible
     },
     {
       id: "carousel",
@@ -99,7 +99,7 @@ export default function DashboardPage() {
         { name: "Instagram", icon: Instagram, color: "text-pink-500" },
         { name: "LinkedIn", icon: Linkedin, color: "text-blue-700" },
       ],
-      isAvailable: true,
+      isAvailable: false, // Grisé - seul Video Post est disponible
     },
   ];
 
