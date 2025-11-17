@@ -1,40 +1,42 @@
-FROM ghcr.io/astral-sh/uv:python3.12-bookworm
+# Dockerfile pour watermark - Service IA de traitement vidéo
+FROM python:3.12-slim
 
-ENV UV_PROJECT_ENVIRONMENT=/app/.venv
-ENV TORCH_HOME=/root/.cache/torch \
-    YOLO_CONFIG_DIR=/root/.cache/ultralytics \
-    HF_HOME=/root/.cache/huggingface
+# Variables d'environnement
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    DEBIAN_FRONTEND=noninteractive
 
-WORKDIR /app
-
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends \
-        ffmpeg \
-        libgl1 \
-        libglib2.0-0 \
+# Installer les dépendances système (FFmpeg, etc.)
+RUN apt-get update && apt-get install -y \
+    ffmpeg \
+    libsm6 \
+    libxext6 \
+    libxrender-dev \
+    libglib2.0-0 \
+    libgomp1 \
     && rm -rf /var/lib/apt/lists/*
 
+# Installer uv (gestionnaire de paquets Python rapide)
+RUN pip install --no-cache-dir uv
+
+# Définir le répertoire de travail
+WORKDIR /app
+
+# Copier les fichiers de configuration
 COPY pyproject.toml uv.lock ./
 
-ARG TORCH_VERSION=2.8.0
-ARG TORCHVISION_VERSION=0.23.0
-ARG TORCH_CUDA_SUFFIX=""
-ARG TORCH_CUDA_INDEX_URL=""
+# Installer les dépendances Python avec uv
+RUN uv sync --frozen --no-dev
 
-RUN uv sync --frozen --no-install-project || uv sync --no-install-project
-
-RUN if [ -n "$TORCH_CUDA_SUFFIX" ]; then \
-        uv pip install --no-cache-dir \
-            --index-url "${TORCH_CUDA_INDEX_URL:-https://download.pytorch.org/whl/cu124}" \
-            "torch==${TORCH_VERSION}${TORCH_CUDA_SUFFIX}" \
-            "torchvision==${TORCHVISION_VERSION}${TORCH_CUDA_SUFFIX}"; \
-    fi
-
+# Copier le code source
 COPY . .
 
-RUN mkdir -p /app/resources "${TORCH_HOME}" "${YOLO_CONFIG_DIR}" "${HF_HOME}"
+# Créer les répertoires nécessaires
+RUN mkdir -p resources output logs data working_dir
 
+# Exposer le port 8000
 EXPOSE 8000
 
+# Commande par défaut
 CMD ["uv", "run", "python", "start_server.py", "--host", "0.0.0.0", "--port", "8000"]
 

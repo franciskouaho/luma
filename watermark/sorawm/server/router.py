@@ -1,22 +1,14 @@
-import tempfile
-import zipfile
 from pathlib import Path
-from typing import Optional
 from uuid import uuid4
 
 import aiofiles
-from fastapi import APIRouter, BackgroundTasks, File, HTTPException, Query, UploadFile
+from fastapi import APIRouter, BackgroundTasks, File, HTTPException, UploadFile
 from fastapi.responses import FileResponse
-from pydantic import BaseModel
 
 from sorawm.server.schemas import WMRemoveResults
 from sorawm.server.worker import worker
 
 router = APIRouter()
-
-
-class CancelTasksRequest(BaseModel):
-    task_ids: list[str]
 
 
 async def process_upload_and_queue(
@@ -70,71 +62,7 @@ async def download_video(task_id: str):
     )
 
 
-@router.post("/cancel_tasks")
-async def cancel_tasks(payload: CancelTasksRequest):
-    await worker.cancel_tasks(payload.task_ids)
-    return {"cancelled": len(payload.task_ids)}
-
-
-@router.get("/download_batch_zip")
-async def download_batch_zip(
-    tasks: str = Query(..., description="Comma-separated task IDs"),
-):
-    """
-    Download multiple completed videos as a ZIP file
-    Usage: /download_batch_zip?tasks=task1,task2,task3
-    """
-    task_ids = [t.strip() for t in tasks.split(",") if t.strip()]
-
-    if not task_ids:
-        raise HTTPException(status_code=400, detail="No task IDs provided")
-
-    if len(task_ids) > 20:
-        raise HTTPException(status_code=400, detail="Maximum 20 videos per ZIP")
-
-    # Validate all tasks are completed
-    video_files = []
-    for task_id in task_ids:
-        result = await worker.get_task_status(task_id)
-        if result is None:
-            raise HTTPException(
-                status_code=404, detail=f"Task {task_id} does not exist"
-            )
-        if result.status != "FINISHED":
-            raise HTTPException(
-                status_code=400,
-                detail=f"Task {task_id} not finished yet: {result.status}",
-            )
-
-        output_path = await worker.get_output_path(task_id)
-        if output_path is None or not output_path.exists():
-            raise HTTPException(
-                status_code=404, detail=f"Output file for task {task_id} does not exist"
-            )
-
-        video_files.append((task_id, output_path))
-
-    # Create temporary ZIP file
-    temp_zip = Path(tempfile.mktemp(suffix=".zip"))
-
-    try:
-        with zipfile.ZipFile(temp_zip, "w", zipfile.ZIP_DEFLATED) as zipf:
-            for i, (task_id, video_path) in enumerate(video_files):
-                # Use original filename if available, otherwise use task_id
-                filename = f"cleaned_video_{i + 1:02d}_{video_path.name}"
-                zipf.write(video_path, filename)
-
-        return FileResponse(
-            path=temp_zip,
-            filename=f"watermarks_removed_{len(video_files)}_videos.zip",
-            media_type="application/zip",
-            headers={
-                "Content-Disposition": f"attachment; filename=watermarks_removed_{len(video_files)}_videos.zip"
-            },
-        )
-
-    except Exception as e:
-        # Cleanup temp file on error
-        if temp_zip.exists():
-            temp_zip.unlink()
-        raise HTTPException(status_code=500, detail=f"Failed to create ZIP: {str(e)}")
+@router.get("/health")
+async def health_check():
+    """Health check endpoint for Docker/load balancers"""
+    return {"status": "healthy", "service": "watermark"}

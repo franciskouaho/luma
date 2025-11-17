@@ -1,80 +1,54 @@
 from pathlib import Path
 from typing import Callable
 
-import cv2
 import ffmpeg
 import numpy as np
 from loguru import logger
 from tqdm import tqdm
 
-from sorawm.configs import ULTRA_FAST_MODE
-from sorawm.utils.imputation_utils import (
-    find_2d_data_bkps,
-    find_idxs_interval,
-    get_interval_average_bbox,
-)
 from sorawm.utils.video_utils import VideoLoader
 from sorawm.watermark_cleaner import WaterMarkCleaner
 from sorawm.watermark_detector import SoraWaterMarkDetector
+from sorawm.utils.imputation_utils import (
+    find_2d_data_bkps,
+    get_interval_average_bbox,
+    find_idxs_interval,
+)
 
 VIDEO_EXTENSIONS = [".mp4", ".avi", ".mov", ".mkv", ".flv", ".wmv", ".webm"]
-
 
 class SoraWM:
     def __init__(self):
         self.detector = SoraWaterMarkDetector()
-        self.cleaner = WaterMarkCleaner(ultra_fast=ULTRA_FAST_MODE)
-        logger.info(
-            f"🚀 SoraWM initialisé - Mode {'ULTRA-RAPIDE' if ULTRA_FAST_MODE else 'Standard'}"
-        )
+        self.cleaner = WaterMarkCleaner()
 
-    def run_batch(
-        self,
-        input_video_dir_path: Path,
+    def run_batch(self, input_video_dir_path: Path,
         output_video_dir_path: Path | None = None,
         progress_callback: Callable[[int], None] | None = None,
         quiet: bool = False,
-    ):
+        ):
         if output_video_dir_path is None:
             output_video_dir_path = input_video_dir_path.parent / "watermark_removed"
             if not quiet:
-                logger.warning(
-                    f"output_video_dir_path is not set, using {output_video_dir_path} as output_video_dir_path"
-                )
-        output_video_dir_path.mkdir(parents=True, exist_ok=True)
+                logger.warning(f"output_video_dir_path is not set, using {output_video_dir_path} as output_video_dir_path")
+        output_video_dir_path.mkdir(parents=True, exist_ok=True)        
         input_video_paths = []
         for ext in VIDEO_EXTENSIONS:
             input_video_paths.extend(input_video_dir_path.rglob(f"*{ext}"))
-
+        
         video_lengths = len(input_video_paths)
         if not quiet:
             logger.info(f"Found {video_lengths} video(s) to process")
-        for idx, input_video_path in enumerate(
-            tqdm(input_video_paths, desc="Processing videos", disable=quiet)
-        ):
-            output_video_path = output_video_dir_path / input_video_path.name
+        for idx, input_video_path in enumerate(tqdm(input_video_paths, desc="Processing videos", disable=quiet)):
+            output_video_path = output_video_dir_path / input_video_path.name            
             if progress_callback:
-
                 def batch_progress_callback(single_video_progress: int):
-                    overall_progress = int(
-                        (idx / video_lengths) * 100
-                        + (single_video_progress / video_lengths)
-                    )
+                    overall_progress = int((idx / video_lengths) * 100 + (single_video_progress / video_lengths))
                     progress_callback(min(overall_progress, 100))
-
-                self.run(
-                    input_video_path,
-                    output_video_path,
-                    progress_callback=batch_progress_callback,
-                    quiet=quiet,
-                )
+                
+                self.run(input_video_path, output_video_path, progress_callback=batch_progress_callback, quiet=quiet)
             else:
-                self.run(
-                    input_video_path,
-                    output_video_path,
-                    progress_callback=None,
-                    quiet=quiet,
-                )
+                self.run(input_video_path, output_video_path, progress_callback=None, quiet=quiet)
 
     def run(
         self,
@@ -82,7 +56,6 @@ class SoraWM:
         output_video_path: Path,
         progress_callback: Callable[[int], None] | None = None,
         quiet: bool = False,
-        cancellation_check: Callable[[], bool] | None = None,
     ):
         input_video_loader = VideoLoader(input_video_path)
         output_video_path.parent.mkdir(parents=True, exist_ok=True)
@@ -95,7 +68,7 @@ class SoraWM:
         output_options = {
             "pix_fmt": "yuv420p",
             "vcodec": "libx264",
-            "preset": "ultrafast",  # Changé de "slow" à "ultrafast" pour encoder 10x plus vite
+            "preset": "slow",
         }
 
         if input_video_loader.original_bitrate:
@@ -103,7 +76,7 @@ class SoraWM:
                 int(int(input_video_loader.original_bitrate) * 1.2)
             )
         else:
-            output_options["crf"] = "23"  # CRF 23 pour balance qualité/vitesse
+            output_options["crf"] = "18"
 
         process_out = (
             ffmpeg.input(
@@ -123,46 +96,16 @@ class SoraWM:
         detect_missed = []
         bbox_centers = []
         bboxes = []
-
-        # OPTIMISATION: Détection tous les N frames au lieu de toutes les frames
-        # Réduit drastiquement le temps de traitement
-        detection_skip = max(
-            1, int(fps / 2)
-        )  # Détecte 2 fois par seconde au lieu de chaque frame
-
         if not quiet:
             logger.debug(
                 f"total frames: {total_frames}, fps: {fps}, width: {width}, height: {height}"
             )
-            logger.info(
-                f"OPTIMISATION: Détection tous les {detection_skip} frames (2 fois/sec)"
-            )
-
         for idx, frame in enumerate(
-            tqdm(
-                input_video_loader,
-                total=total_frames,
-                desc="Detect watermarks",
-                disable=quiet,
-            )
+            tqdm(input_video_loader, total=total_frames, desc="Detect watermarks", disable=quiet)
         ):
-            # Vérifier l'annulation toutes les 10 frames
-            if cancellation_check and idx % 10 == 0 and cancellation_check():
-                if not quiet:
-                    logger.info("Cancellation detected during detection phase")
-                process_out.stdin.close()
-                process_out.terminate()
-                temp_output_path.unlink(missing_ok=True)
-                raise InterruptedError("Task was cancelled")
-
-            # Ne détecter que tous les N frames pour accélérer
-            if idx % detection_skip == 0:
-                detection_result = self.detector.detect(frame)
-            else:
-                # Skip detection - sera interpolé
-                detection_result = {"detected": False}
+            detection_result = self.detector.detect(frame)
             if detection_result["detected"]:
-                frame_bboxes[idx] = {"bbox": detection_result["bbox"]}
+                frame_bboxes[idx] = { "bbox": detection_result["bbox"]}
                 x1, y1, x2, y2 = detection_result["bbox"]
                 bbox_centers.append((int((x1 + x2) / 2), int((y1 + y2) / 2)))
                 bboxes.append((x1, y1, x2, y2))
@@ -203,10 +146,8 @@ class SoraWM:
                 ):
                     frame_bboxes[missed_idx]["bbox"] = interval_bboxes[interval_idx]
                     if not quiet:
-                        logger.debug(
-                            f"Filled missed frame {missed_idx} with bbox:\n"
-                            f" {interval_bboxes[interval_idx]}"
-                        )
+                        logger.debug(f"Filled missed frame {missed_idx} with bbox:\n"
+                        f" {interval_bboxes[interval_idx]}")
                 else:
                     # if the interval has no valid bbox, use the previous and next frame to complete (fallback strategy)
                     before = max(missed_idx - 1, 0)
@@ -221,26 +162,10 @@ class SoraWM:
             del bboxes
             del bbox_centers
             del detect_missed
-
+        
         input_video_loader = VideoLoader(input_video_path)
 
-        for idx, frame in enumerate(
-            tqdm(
-                input_video_loader,
-                total=total_frames,
-                desc="Remove watermarks",
-                disable=quiet,
-            )
-        ):
-            # Vérifier l'annulation toutes les 10 frames
-            if cancellation_check and idx % 10 == 0 and cancellation_check():
-                if not quiet:
-                    logger.info("Cancellation detected during removal phase")
-                process_out.stdin.close()
-                process_out.terminate()
-                temp_output_path.unlink(missing_ok=True)
-                raise InterruptedError("Task was cancelled")
-
+        for idx, frame in enumerate(tqdm(input_video_loader, total=total_frames, desc="Remove watermarks", disable=quiet)):
             bbox = frame_bboxes[idx]["bbox"]
             if bbox is not None:
                 x1, y1, x2, y2 = bbox

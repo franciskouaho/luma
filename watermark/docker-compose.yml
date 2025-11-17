@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  watermark:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: watermark-service
+    ports:
+      - "8000:8000"
+    volumes:
+      # Volume pour les ressources (modèles YOLO, etc.)
+      - ./resources:/app/resources
+      # Volume pour les vidéos uploadées
+      - ./data:/app/data
+      # Volume pour les vidéos traitées
+      - ./output:/app/output
+      # Volume pour les logs
+      - ./logs:/app/logs
+      # Volume pour le répertoire de travail
+      - ./working_dir:/app/working_dir
+    environment:
+      - PYTHONUNBUFFERED=1
+    # Optionnel : utiliser GPU si disponible
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health').read()"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+

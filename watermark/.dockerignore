@@ -1,16 +1,48 @@
-.git
-.gitignore
+# Fichiers Python
 __pycache__/
-.pytest_cache/
-.mypy_cache/
-.ruff_cache/
-.venv/
-.env
-*.pyc
-*.pyo
-*.pyd
-*.swp
-*.log
-*.tmp
-.DS_Store
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
 
+# Environnements virtuels
+venv/
+env/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+logs/
+*.log
+
+# Données temporaires
+working_dir/
+output/
+data/
+tmp/
+temp/
+
+# Git
+.git/
+.gitignore
+
+# Docker
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Documentation
+*.md
+README*
+
+# Autres
+.DS_Store
+*.pyc

@@ -165,10 +165,6 @@ class WMRemoveTaskWorker:
                         self._update_progress(task_id, percentage), loop_ref
                     )
 
-                def cancellation_check(task_id: str = task_uuid) -> bool:
-                    """Retourne True si la tâche doit être annulée"""
-                    return task_id in self.cancelled_tasks
-
                 if task_uuid in self.cancelled_tasks:
                     logger.info(
                         f"Cancellation detected before executing task {task_uuid}."
@@ -183,7 +179,6 @@ class WMRemoveTaskWorker:
                     output_path,
                     progress_callback,
                     False,  # quiet
-                    cancellation_check,
                 )
 
                 if task_uuid in self.cancelled_tasks:

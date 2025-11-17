@@ -18,11 +18,6 @@ OUTPUT_DIR.mkdir(exist_ok=True, parents=True)
 
 DEFAULT_WATERMARK_REMOVE_MODEL = "lama"
 
-# Configuration optimisation ultra-rapide
-ULTRA_FAST_MODE = (
-    True  # True = cv2.inpaint (8x plus rapide), False = lama (meilleure qualité)
-)
-
 WORKING_DIR = ROOT / "working_dir"
 WORKING_DIR.mkdir(exist_ok=True, parents=True)
 
