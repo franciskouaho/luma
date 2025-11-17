@@ -4,6 +4,8 @@ import TikTokConnectionModal from "@/components/tiktok/TikTokConnectionModal";
 import { PlatformIcon } from "@/components/ui/platform-icon";
 import { useAuth } from "@/hooks/use-auth";
 import { useTikTokAccounts } from "@/hooks/use-tiktok-accounts";
+import { usePlanLimits } from "@/hooks/use-plan-limits";
+import { UpgradePrompt } from "@/components/plan/upgrade-prompt";
 import {
   AlertCircle,
   CheckCircle,
@@ -55,6 +57,7 @@ function AccountsPageContent() {
     useTikTokAccounts({
       userId: user?.uid || "",
     });
+  const { canAddAccount, getUpgradeMsg, limits } = usePlanLimits();
   const [isConnecting, setIsConnecting] = useState(false);
   const [showTikTokModal, setShowTikTokModal] = useState(false);
   const [platforms, setPlatforms] = useState<Platform[]>([]);
@@ -142,6 +145,11 @@ function AccountsPageContent() {
 
   const handleConnectPlatform = async (platformName: string) => {
     if (platformName === "TikTok") {
+      // Vérifier la limite de comptes
+      if (!canAddAccount) {
+        alert(getUpgradeMsg('accounts'));
+        return;
+      }
       setShowTikTokModal(true);
     }
   };
@@ -213,6 +221,23 @@ function AccountsPageContent() {
       </div>
 
       <div className="max-w-7xl mx-auto px-6 py-8">
+        {/* Upgrade Banner si limite atteinte */}
+        {!canAddAccount && (
+          <UpgradePrompt
+            message={getUpgradeMsg('accounts')}
+            type="banner"
+          />
+        )}
+
+        {/* Warning si proche de la limite */}
+        {canAddAccount && limits.maxAccounts !== null && accounts.length >= limits.maxAccounts * 0.8 && (
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6">
+            <p className="text-sm text-amber-800">
+              ⚠️ Vous avez utilisé {accounts.length} sur {limits.maxAccounts} comptes disponibles.
+            </p>
+          </div>
+        )}
+
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           <div className="bg-white rounded-lg p-5 border border-gray-200 hover:border-purple-300 transition-colors">

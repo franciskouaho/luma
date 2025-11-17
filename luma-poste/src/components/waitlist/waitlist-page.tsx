@@ -185,7 +185,7 @@ export default function WaitlistPage() {
                 </button>
 
                 <p className="text-xs text-gray-500">
-                  Essai gratuit 14 jours. Sans engagement.
+                  Essai gratuit 3 jours. Sans engagement.
                 </p>
               </form>
             )}
@@ -219,8 +219,8 @@ export default function WaitlistPage() {
               </div>
             </div>
 
-            {/* Floating badges */}
-            <div className="absolute -left-4 top-1/4 bg-white rounded-lg shadow-xl border border-gray-200 px-4 py-3 transform -rotate-3">
+            {/* Floating badges - desktop uniquement */}
+            <div className="hidden lg:block absolute -left-4 top-1/4 bg-white rounded-lg shadow-xl border border-gray-200 px-4 py-3 transform -rotate-3">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#9B6BFF' }}>
                   <span className="text-2xl">⚡</span>
@@ -234,7 +234,7 @@ export default function WaitlistPage() {
               </div>
             </div>
 
-            <div className="absolute -right-4 top-1/4 bg-white rounded-lg shadow-xl border border-gray-200 px-4 py-3 transform rotate-3">
+            <div className="hidden lg:block absolute -right-4 top-1/4 bg-white rounded-lg shadow-xl border border-gray-200 px-4 py-3 transform rotate-3">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#10B981' }}>
                   <span className="text-2xl">🚀</span>
@@ -248,7 +248,7 @@ export default function WaitlistPage() {
               </div>
             </div>
 
-            <div className="absolute -left-6 bottom-1/4 bg-white rounded-lg shadow-xl border border-gray-200 px-4 py-3 transform rotate-2">
+            <div className="hidden lg:block absolute -left-6 bottom-1/4 bg-white rounded-lg shadow-xl border border-gray-200 px-4 py-3 transform rotate-2">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#F97316' }}>
                   <span className="text-2xl">📊</span>
@@ -262,9 +262,68 @@ export default function WaitlistPage() {
               </div>
             </div>
 
-            <div className="absolute -right-6 bottom-1/3 bg-white rounded-lg shadow-xl border border-gray-200 px-4 py-3 transform -rotate-2">
+            <div className="hidden lg:block absolute -right-6 bottom-1/3 bg-white rounded-lg shadow-xl border border-gray-200 px-4 py-3 transform -rotate-2">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#EC4899' }}>
+                  <span className="text-2xl">🎯</span>
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-gray-900">Multi-comptes</p>
+                  <span className="inline-block mt-1 px-2 py-0.5 bg-pink-100 text-pink-700 rounded text-xs font-medium">
+                    TikTok
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Features grid - mobile uniquement */}
+          <div className="mt-8 grid grid-cols-2 gap-3 lg:hidden">
+            <div className="bg-white rounded-lg shadow-lg border border-gray-200 px-4 py-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#9B6BFF' }}>
+                  <span className="text-2xl">⚡</span>
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-gray-900">Gain de temps</p>
+                  <span className="inline-block mt-1 px-2 py-0.5 bg-purple-100 text-purple-700 rounded text-xs font-medium">
+                    Publier
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-lg shadow-lg border border-gray-200 px-4 py-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#10B981' }}>
+                  <span className="text-2xl">🚀</span>
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-gray-900">Programmation</p>
+                  <span className="inline-block mt-1 px-2 py-0.5 bg-green-100 text-green-700 rounded text-xs font-medium">
+                    Auto-post
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-lg shadow-lg border border-gray-200 px-4 py-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#F97316' }}>
+                  <span className="text-2xl">📊</span>
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-gray-900">Analytics</p>
+                  <span className="inline-block mt-1 px-2 py-0.5 bg-orange-100 text-orange-700 rounded text-xs font-medium">
+                    Stats
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-lg shadow-lg border border-gray-200 px-4 py-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#EC4899' }}>
                   <span className="text-2xl">🎯</span>
                 </div>
                 <div>

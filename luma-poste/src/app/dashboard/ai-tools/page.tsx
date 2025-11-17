@@ -7,9 +7,13 @@ import {
   Download,
   Loader2,
   Upload,
+  Zap,
 } from "lucide-react";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { usePlanLimits } from "@/hooks/use-plan-limits";
+import { UpgradePrompt } from "@/components/plan/upgrade-prompt";
+import { useAuth } from "@/hooks/use-auth";
 
 const API_BASE_URL = (
   process.env.NEXT_PUBLIC_WATERMARK_API_URL ?? "http://localhost:8000"
@@ -38,6 +42,7 @@ type TaskItem = {
   error?: string;
   originalPreviewUrl?: string;
   resultPreviewUrl?: string;
+  creditsDeducted?: boolean;
 };
 
 const buildApiUrl = (path: string) => {
@@ -54,6 +59,8 @@ const generateId = () =>
     : Math.random().toString(36).slice(2, 12);
 
 export default function AIToolsPage() {
+  const { user } = useAuth();
+  const { hasAICredits, currentUsage, limits, refresh: refreshLimits } = usePlanLimits();
   const [dragActive, setDragActive] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
@@ -68,6 +75,9 @@ export default function AIToolsPage() {
   const [batchMode, setBatchMode] = useState(false);
   const [videosPerSecond, setVideosPerSecond] = useState<number>(0);
   const [concurrentVideos, setConcurrentVideos] = useState<number>(0);
+
+  const creditsRemaining = limits.aiCreditsPerMonth - currentUsage.aiCredits;
+  const creditsPerVideo = 25; // 25 crédits par vidéo traitée
 
   const pollingRef = useRef<NodeJS.Timeout | null>(null);
   const tasksRef = useRef<TaskItem[]>([]);
@@ -94,6 +104,12 @@ export default function AIToolsPage() {
     e.stopPropagation();
     setDragActive(false);
 
+    // Bloquer si pas de crédits
+    if (creditsRemaining <= 0) {
+      setErrorMessage("❌ Vous n'avez plus de crédits IA ce mois. Passez au plan supérieur pour continuer.");
+      return;
+    }
+
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       const files = Array.from(e.dataTransfer.files).slice(0, 20);
       setSelectedFiles(files);
@@ -101,6 +117,12 @@ export default function AIToolsPage() {
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Bloquer si pas de crédits
+    if (creditsRemaining <= 0) {
+      setErrorMessage("❌ Vous n'avez plus de crédits IA ce mois. Passez au plan supérieur pour continuer.");
+      return;
+    }
+
     if (e.target.files) {
       const files = Array.from(e.target.files).slice(0, 20);
       setSelectedFiles(files);
@@ -224,6 +246,13 @@ export default function AIToolsPage() {
             return task;
           }
 
+          // Déduire les crédits si la tâche vient de finir
+          const justFinished = update.data.status === "FINISHED" && task.status !== "FINISHED" && !task.creditsDeducted;
+          if (justFinished) {
+            // Déduire 1 crédit de manière asynchrone
+            deductAICredits(1);
+          }
+
           return {
             ...task,
             status: update.data.status,
@@ -233,6 +262,7 @@ export default function AIToolsPage() {
               update.data.status === "FINISHED" && update.data.download_url
                 ? buildApiUrl(update.data.download_url)
                 : task.resultPreviewUrl,
+            creditsDeducted: justFinished || task.creditsDeducted,
           };
         });
 
@@ -353,8 +383,36 @@ export default function AIToolsPage() {
     return `~${minutes} min ${remainingSeconds}s`;
   };
 
+  const deductAICredits = async (videoCount: number) => {
+    if (!user) return;
+
+    try {
+      const token = await user.getIdToken();
+      await fetch("/api/ai-credits/deduct", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+        body: JSON.stringify({ credits: videoCount * creditsPerVideo }),
+      });
+
+      // Rafraîchir les limites
+      await refreshLimits();
+    } catch (error) {
+      console.error("Error deducting credits:", error);
+    }
+  };
+
   const handleUpload = async () => {
     if (!selectedFiles.length || isUploading) {
+      return;
+    }
+
+    // Vérifier si assez de crédits
+    const creditsNeeded = selectedFiles.length * creditsPerVideo;
+    if (creditsRemaining < creditsNeeded) {
+      setErrorMessage(`❌ Pas assez de crédits IA. Vous avez ${creditsRemaining} crédits, mais ${creditsNeeded} sont nécessaires.`);
       return;
     }
 
@@ -546,6 +604,31 @@ export default function AIToolsPage() {
             images. Process up to 20 videos simultaneously!
           </p>
 
+          {/* Compteur de crédits IA */}
+          <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200 rounded-full">
+            <Zap className="w-4 h-4 text-purple-600" />
+            <span className="text-sm font-semibold text-gray-900">
+              Crédits IA : {creditsRemaining} / {limits.aiCreditsPerMonth}
+            </span>
+          </div>
+
+          {/* Warning si peu de crédits */}
+          {creditsRemaining < 10 && creditsRemaining > 0 && (
+            <div className="mt-3 text-sm text-amber-600 font-medium">
+              ⚠️ Plus que {creditsRemaining} crédits restants ce mois
+            </div>
+          )}
+
+          {/* Bloqué si pas de crédits */}
+          {creditsRemaining <= 0 && (
+            <div className="mt-3">
+              <UpgradePrompt
+                message="Vous avez épuisé vos crédits IA ce mois. Passez au plan supérieur pour continuer."
+                type="inline"
+              />
+            </div>
+          )}
+
           {/* Performance Indicator */}
           <div className="mt-4 flex justify-center items-center gap-6">
             <div className="flex items-center gap-2 bg-amber-50 px-4 py-2 rounded-full">
@@ -635,12 +718,12 @@ export default function AIToolsPage() {
                 </div>
               )}
               <div
-                className={`relative overflow-hidden border border-solid rounded-3xl p-12 lg:p-20 transition-colors min-h-[560px] flex items-center justify-center`}
-                onDragEnter={handleDrag}
-                onDragLeave={handleDrag}
-                onDragOver={handleDrag}
-                onDrop={handleDrop}
-                onClick={() => fileInputRef.current?.click()}
+                className={`relative overflow-hidden border border-solid rounded-3xl p-12 lg:p-20 transition-colors min-h-[560px] flex items-center justify-center ${creditsRemaining <= 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
+                onDragEnter={creditsRemaining > 0 ? handleDrag : undefined}
+                onDragLeave={creditsRemaining > 0 ? handleDrag : undefined}
+                onDragOver={creditsRemaining > 0 ? handleDrag : undefined}
+                onDrop={creditsRemaining > 0 ? handleDrop : undefined}
+                onClick={creditsRemaining > 0 ? () => fileInputRef.current?.click() : undefined}
               >
                 <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(147,51,234,0.12),transparent_55%)]" />
                 <div className="w-full max-w-5xl cursor-pointer space-y-10 relative z-10">
@@ -849,9 +932,16 @@ export default function AIToolsPage() {
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              fileInputRef.current?.click();
+                              if (creditsRemaining > 0) {
+                                fileInputRef.current?.click();
+                              }
                             }}
-                            className="bg-linear-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white px-12 py-4 rounded-xl font-semibold text-lg flex items-center justify-center gap-3 transition-all shadow-md shadow-purple-500/20 mx-auto"
+                            disabled={creditsRemaining <= 0}
+                            className={`px-12 py-4 rounded-xl font-semibold text-lg flex items-center justify-center gap-3 transition-all shadow-md mx-auto ${
+                              creditsRemaining <= 0
+                                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                : 'bg-linear-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white shadow-purple-500/20'
+                            }`}
                           >
                             <Upload className="w-6 h-6" />
                             <span>Ajouter un fichier</span>
@@ -913,9 +1003,16 @@ export default function AIToolsPage() {
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
-                                fileInputRef.current?.click();
+                                if (creditsRemaining > 0) {
+                                  fileInputRef.current?.click();
+                                }
                               }}
-                              className="inline-flex items-center gap-2 rounded-lg border border-purple-200 px-4 py-2 text-sm font-medium text-purple-700 hover:border-purple-300 hover:bg-purple-50 transition-colors"
+                              disabled={creditsRemaining <= 0}
+                              className={`inline-flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-medium transition-colors ${
+                                creditsRemaining <= 0
+                                  ? 'border-gray-200 text-gray-400 cursor-not-allowed'
+                                  : 'border-purple-200 text-purple-700 hover:border-purple-300 hover:bg-purple-50'
+                              }`}
                             >
                               <Upload className="w-4 h-4" />
                               Ajouter un autre fichier
@@ -994,9 +1091,9 @@ export default function AIToolsPage() {
                                 e.stopPropagation();
                                 void handleUpload();
                               }}
-                              disabled={isUploading}
+                              disabled={isUploading || creditsRemaining <= 0}
                               className={`group relative inline-flex items-center justify-center gap-2 rounded-xl px-8 py-3 text-base font-semibold text-white transition-all shadow-lg ${
-                                isUploading
+                                isUploading || creditsRemaining <= 0
                                   ? "bg-gray-300 text-gray-500 cursor-not-allowed"
                                   : "bg-linear-to-r from-purple-600 via-purple-700 to-purple-600 hover:shadow-purple-500/30"
                               }`}

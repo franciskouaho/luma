@@ -109,7 +109,7 @@ export function WorkspaceSelector({
                 </Button>
               </div>
             ) : (
-              <>
+              <div className="space-y-2">
                 {uniqueWorkspaces.map((workspace, index) => (
                   <Card
                     key={`${workspace.id}-${index}`}
@@ -134,7 +134,7 @@ export function WorkspaceSelector({
                     </div>
                   </Card>
                 ))}
-                
+
                 <div className="mt-2 pt-2 border-t border-gray-200">
                   <Button
                     variant="outline"
@@ -149,7 +149,7 @@ export function WorkspaceSelector({
                     Créer un nouveau workspace
                   </Button>
                 </div>
-              </>
+              </div>
             )}
           </div>
         </div>

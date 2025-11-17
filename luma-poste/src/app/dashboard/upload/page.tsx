@@ -3,9 +3,12 @@
 import { CheckCircle, FileVideo, Upload, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { usePlanLimits } from "@/hooks/use-plan-limits";
+import { UpgradePrompt } from "@/components/plan/upgrade-prompt";
 
 export default function UploadPage() {
   const router = useRouter();
+  const { canAddPublication, getUpgradeMsg, limits, currentUsage } = usePlanLimits();
   const [isDragging, setIsDragging] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
 
@@ -23,6 +26,11 @@ export default function UploadPage() {
     e.preventDefault();
     setIsDragging(false);
 
+    if (!canAddPublication) {
+      alert(getUpgradeMsg('publications'));
+      return;
+    }
+
     const files = Array.from(e.dataTransfer.files).filter(
       file => file.type.startsWith('video/')
     );
@@ -31,6 +39,11 @@ export default function UploadPage() {
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!canAddPublication) {
+      alert(getUpgradeMsg('publications'));
+      return;
+    }
+
     if (e.target.files) {
       const files = Array.from(e.target.files);
       setUploadedFiles(prev => [...prev, ...files]);
@@ -61,6 +74,23 @@ export default function UploadPage() {
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Upload Videos</h1>
           <p className="text-gray-600">Upload your videos and create posts for social media</p>
         </div>
+
+        {/* Upgrade Banner si limite atteinte */}
+        {!canAddPublication && (
+          <UpgradePrompt
+            message={getUpgradeMsg('publications')}
+            type="banner"
+          />
+        )}
+
+        {/* Usage counter si limite existe */}
+        {limits.maxPublicationsPerMonth !== null && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+            <p className="text-sm text-blue-800">
+              📊 Publications ce mois : {currentUsage.publications} / {limits.maxPublicationsPerMonth}
+            </p>
+          </div>
+        )}
 
         {/* Upload Area */}
         <div

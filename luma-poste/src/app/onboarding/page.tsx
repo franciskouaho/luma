@@ -17,6 +17,10 @@ export default function OnboardingPage() {
 
   // Step 1: Plan
   const [selectedPlan, setSelectedPlan] = useState("professional");
+  const [promoCode, setPromoCode] = useState("");
+  const [promoCodeApplied, setPromoCodeApplied] = useState(false);
+  const [promoCodeError, setPromoCodeError] = useState("");
+  const [validatingCode, setValidatingCode] = useState(false);
 
   // Step 2: Workspace
   const [workspaceName, setWorkspaceName] = useState("");
@@ -32,60 +36,71 @@ export default function OnboardingPage() {
     if (user?.displayName && !workspaceName) {
       setWorkspaceName(user.displayName);
     }
+
+    // Détecter le retour du paiement Lemon Squeezy
+    const urlParams = new URLSearchParams(window.location.search);
+    const checkoutSuccess = urlParams.get("checkout");
+
+    if (checkoutSuccess === "success") {
+      // Récupérer le plan depuis localStorage
+      const savedPlan = localStorage.getItem("selectedPlan");
+      if (savedPlan) {
+        setSelectedPlan(savedPlan);
+      }
+      // Passer à l'étape 2 pour créer le workspace
+      setCurrentStep(2);
+      // Nettoyer l'URL
+      window.history.replaceState({}, "", "/onboarding");
+    }
   }, [user, authLoading, router, workspaceName]);
 
-  const handleNextStep = () => {
-    if (currentStep === 1) {
-      // Vérifier qu'un plan est sélectionné
-      if (!selectedPlan) {
-        setError("Veuillez sélectionner un plan");
-        return;
+  const handleApplyPromoCode = async () => {
+    if (!promoCode.trim()) {
+      setPromoCodeError("Veuillez entrer un code");
+      return;
+    }
+
+    setValidatingCode(true);
+    setPromoCodeError("");
+
+    try {
+      const idToken = await user?.getIdToken();
+      const response = await fetch("/api/validate-promo", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${idToken}`,
+        },
+        body: JSON.stringify({ code: promoCode.trim() }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.valid) {
+        setPromoCodeApplied(true);
+        setPromoCodeError("");
+      } else {
+        setPromoCodeError(data.message || "Code invalide");
+        setPromoCodeApplied(false);
       }
-      setError("");
-      setCurrentStep(2);
-    } else if (currentStep === 2) {
-      if (!workspaceName.trim()) {
-        setError("Veuillez entrer un nom de workspace");
-        return;
-      }
-      setError("");
-      handleComplete();
+    } catch (err) {
+      console.error("Error validating promo code:", err);
+      setPromoCodeError("Erreur lors de la validation");
+      setPromoCodeApplied(false);
+    } finally {
+      setValidatingCode(false);
     }
   };
 
-  const handleComplete = async () => {
+  const handlePayment = async () => {
     if (!user) return;
 
     setLoading(true);
     setError("");
 
     try {
-      // Créer le workspace dans Firestore
-      const workspaceRef = doc(db, "workspaces", `${user.uid}_default`);
-      await setDoc(workspaceRef, {
-        name: workspaceName,
-        type: workspaceType,
-        timezone: timezone,
-        ownerId: user.uid,
-        plan: selectedPlan,
-        paymentStatus: "pending",
-        createdAt: serverTimestamp(),
-        settings: {
-          allowMemberInvites: true,
-          requireApprovalForPosts: false,
-          allowMemberAccountConnections: true
-        }
-      });
-
-      // Marquer l'onboarding comme complété
-      const userRef = doc(db, "users", user.uid);
-      await setDoc(userRef, {
-        onboardingCompleted: true,
-        workspaceId: `${user.uid}_default`,
-        plan: selectedPlan,
-        subscriptionStatus: "pending",
-        completedAt: serverTimestamp()
-      }, { merge: true });
+      // Sauvegarder le plan sélectionné dans localStorage pour le retrouver après le paiement
+      localStorage.setItem("selectedPlan", selectedPlan);
 
       // Récupérer l'ID token pour l'authentification API
       const idToken = await user.getIdToken();
@@ -105,7 +120,7 @@ export default function OnboardingPage() {
         return;
       }
 
-      // Créer le checkout Lemon Squeezy
+      // Créer le checkout Lemon Squeezy - après paiement, revenir sur onboarding
       const response = await fetch("/api/checkout", {
         method: "POST",
         headers: {
@@ -115,18 +130,99 @@ export default function OnboardingPage() {
         body: JSON.stringify({
           variantId: variantId,
           plan: selectedPlan,
-          workspaceName: workspaceName,
+          workspaceName: "", // Sera créé à l'étape 2
+          redirectUrl: `${process.env.NEXT_PUBLIC_APP_URL}/onboarding?checkout=success`,
         }),
       });
 
       if (!response.ok) {
-        throw new Error("Failed to create checkout");
+        const errorData = await response.json();
+        console.error("Checkout API error:", errorData);
+        throw new Error(errorData.error || "Failed to create checkout");
       }
 
       const { checkoutUrl } = await response.json();
 
       // Rediriger vers Lemon Squeezy checkout
       window.location.href = checkoutUrl;
+    } catch (err) {
+      console.error("Error creating payment:", err);
+      setError("Une erreur est survenue. Réessayez.");
+      setLoading(false);
+    }
+  };
+
+  const handleNextStep = () => {
+    if (currentStep === 1) {
+      // Vérifier qu'un plan est sélectionné
+      if (!selectedPlan) {
+        setError("Veuillez sélectionner un plan");
+        return;
+      }
+      setError("");
+
+      // Si code promo appliqué, aller à l'étape workspace
+      if (promoCodeApplied) {
+        setCurrentStep(2);
+        return;
+      }
+
+      // Sinon, rediriger directement vers le paiement Lemon Squeezy
+      handlePayment();
+    } else if (currentStep === 2) {
+      if (!workspaceName.trim()) {
+        setError("Veuillez entrer un nom de workspace");
+        return;
+      }
+      setError("");
+      handleComplete();
+    }
+  };
+
+  const handleComplete = async () => {
+    if (!user) return;
+
+    setLoading(true);
+    setError("");
+
+    try {
+      // Vérifier si l'utilisateur a déjà payé (via localStorage)
+      const hasPaid = localStorage.getItem("selectedPlan") !== null;
+
+      // Créer le workspace dans Firestore
+      const workspaceRef = doc(db, "workspaces", `${user.uid}_default`);
+      await setDoc(workspaceRef, {
+        name: workspaceName,
+        type: workspaceType,
+        timezone: timezone,
+        ownerId: user.uid,
+        plan: selectedPlan,
+        paymentStatus: promoCodeApplied ? "free" : (hasPaid ? "active" : "pending"),
+        promoCode: promoCodeApplied ? promoCode : null,
+        createdAt: serverTimestamp(),
+        settings: {
+          allowMemberInvites: true,
+          requireApprovalForPosts: false,
+          allowMemberAccountConnections: true
+        }
+      });
+
+      // Marquer l'onboarding comme complété
+      const userRef = doc(db, "users", user.uid);
+      await setDoc(userRef, {
+        onboardingCompleted: true,
+        workspaceId: `${user.uid}_default`,
+        plan: selectedPlan,
+        subscriptionStatus: promoCodeApplied ? "active" : (hasPaid ? "active" : "pending"),
+        promoCode: promoCodeApplied ? promoCode : null,
+        completedAt: serverTimestamp()
+      }, { merge: true });
+
+      // Nettoyer localStorage
+      localStorage.removeItem("selectedPlan");
+
+      // Rediriger vers le dashboard
+      router.push("/dashboard");
     } catch (err) {
       console.error("Error completing onboarding:", err);
       setError("Une erreur est survenue. Réessayez.");
@@ -346,6 +442,45 @@ export default function OnboardingPage() {
                     </ul>
                   </button>
                 ))}
+              </div>
+
+              {/* Code promo section */}
+              <div className="max-w-md mx-auto mt-6 mb-4">
+                <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Code promo ou beta
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={promoCode}
+                      onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+                      placeholder="BETA2025"
+                      disabled={promoCodeApplied || validatingCode}
+                      className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#9B6BFF] focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed uppercase"
+                    />
+                    <button
+                      onClick={handleApplyPromoCode}
+                      disabled={promoCodeApplied || validatingCode || !promoCode.trim()}
+                      className="px-6 py-2 text-white rounded-lg font-medium transition-all hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                      style={{ backgroundColor: '#9B6BFF' }}
+                    >
+                      {validatingCode ? "..." : promoCodeApplied ? "✓ Appliqué" : "Appliquer"}
+                    </button>
+                  </div>
+                  {promoCodeError && (
+                    <p className="text-xs text-red-600 mt-2">{promoCodeError}</p>
+                  )}
+                  {promoCodeApplied && (
+                    <div className="mt-2 flex items-center gap-2 text-sm text-green-700">
+                      <Check className="w-4 h-4" strokeWidth={3} />
+                      <span className="font-medium">Code valide ! Accès gratuit activé</span>
+                    </div>
+                  )}
+                  <p className="text-xs text-gray-500 mt-2">
+                    Pour beta testeurs et admins uniquement
+                  </p>
+                </div>
               </div>
 
               {error && (

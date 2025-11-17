@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 import { useWorkspaceMembers, WorkspaceMember } from '@/hooks/use-workspaces';
+import { usePlanLimits } from '@/hooks/use-plan-limits';
+import { UpgradePrompt } from '@/components/plan/upgrade-prompt';
 import { UserSearch } from './user-search';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -17,13 +19,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { 
-  Users, 
-  UserPlus, 
-  MoreVertical, 
-  Crown, 
-  Shield, 
-  Edit, 
+import {
+  Users,
+  UserPlus,
+  MoreVertical,
+  Crown,
+  Shield,
+  Edit,
   Eye,
   Trash2,
   Loader2,
@@ -45,6 +47,7 @@ interface TeamManagementProps {
 
 export function TeamManagement({ workspaceId, currentUserRole }: TeamManagementProps) {
   const { members, loading, inviteMember, updateMember, removeMember } = useWorkspaceMembers(workspaceId);
+  const { canAddTeamMember, getUpgradeMsg, limits } = usePlanLimits();
   const [isInviting, setIsInviting] = useState(false);
   const [inviteRole, setInviteRole] = useState<'admin' | 'editor' | 'viewer'>('editor');
   const [selectedMember, setSelectedMember] = useState<WorkspaceMember | null>(null);
@@ -150,6 +153,13 @@ export function TeamManagement({ workspaceId, currentUserRole }: TeamManagementP
     }
   };
 
+  const handleInviteClick = () => {
+    if (!canAddTeamMember) {
+      alert(getUpgradeMsg('teamMembers'));
+      return;
+    }
+    setShowUserSearch(true);
+  };
 
   if (loading) {
     return (
@@ -164,6 +174,23 @@ export function TeamManagement({ workspaceId, currentUserRole }: TeamManagementP
 
   return (
     <div className="space-y-6">
+        {/* Upgrade Banner si limite atteinte */}
+        {!canAddTeamMember && canManageMembers && (
+          <UpgradePrompt
+            message={getUpgradeMsg('teamMembers')}
+            type="banner"
+          />
+        )}
+
+        {/* Warning si proche de la limite */}
+        {canAddTeamMember && canManageMembers && limits.maxTeamMembers !== null && members.length >= limits.maxTeamMembers * 0.8 && (
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+            <p className="text-sm text-amber-800">
+              ⚠️ Vous avez {members.length} sur {limits.maxTeamMembers} membres dans l'équipe.
+            </p>
+          </div>
+        )}
+
         {/* Invitation de nouveaux membres */}
         {canManageMembers && (
           <Card className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 bg-gradient-to-r from-emerald-50 to-white">
@@ -196,8 +223,8 @@ export function TeamManagement({ workspaceId, currentUserRole }: TeamManagementP
                 </div>
 
                 <Button
-                  onClick={() => setShowUserSearch(true)}
-                  disabled={isInviting}
+                  onClick={handleInviteClick}
+                  disabled={isInviting || !canAddTeamMember}
                   className="w-full text-white shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
                   style={{ background: 'var(--luma-gradient-primary)' }}
                 >
@@ -252,8 +279,9 @@ export function TeamManagement({ workspaceId, currentUserRole }: TeamManagementP
               </div>
               {canManageMembers && (
                 <Button
-                  onClick={() => setShowUserSearch(true)}
-                  className="text-white shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
+                  onClick={handleInviteClick}
+                  disabled={!canAddTeamMember}
+                  className="text-white shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 disabled:opacity-50"
                   style={{ background: 'var(--luma-gradient-primary)' }}
                 >
                   <UserPlus className="h-4 w-4 mr-2" />

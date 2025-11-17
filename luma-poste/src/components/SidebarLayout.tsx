@@ -2,6 +2,7 @@
 
 import { CreateWorkspaceDialog } from "@/components/workspace/create-workspace-dialog";
 import { WorkspaceSelector } from "@/components/workspace/workspace-selector";
+import { PlanBadge } from "@/components/plan/plan-badge";
 import { useWorkspaceContext } from "@/contexts/workspace-context";
 import { useAuth } from "@/hooks/use-auth";
 import { useWorkspaces } from "@/hooks/use-workspaces";
@@ -182,7 +183,9 @@ export default function SidebarLayout({ children }: SidebarProps) {
                 <p className="text-sm font-medium text-gray-900">
                   {user?.displayName || "Utilisateur"}
                 </p>
-                <p className="text-xs text-gray-500">Pro Plan</p>
+                <div className="mt-1">
+                  <PlanBadge size="sm" showUpgradeLink={false} />
+                </div>
               </div>
             </div>
             <button
