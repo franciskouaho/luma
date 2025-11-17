@@ -22,6 +22,13 @@ export default function OnboardingPage() {
   const [promoCodeError, setPromoCodeError] = useState("");
   const [validatingCode, setValidatingCode] = useState(false);
 
+  // Quand un code beta est appliqué, utiliser le plan starter avec restrictions
+  useEffect(() => {
+    if (promoCodeApplied) {
+      setSelectedPlan("starter");
+    }
+  }, [promoCodeApplied]);
+
   // Step 2: Workspace
   const [workspaceName, setWorkspaceName] = useState("");
   const [workspaceType, setWorkspaceType] = useState("Personel");
@@ -189,6 +196,9 @@ export default function OnboardingPage() {
       // Vérifier si l'utilisateur a déjà payé (via localStorage)
       const hasPaid = localStorage.getItem("selectedPlan") !== null;
 
+      // Si code beta appliqué, forcer le plan starter avec restrictions
+      const finalPlan = promoCodeApplied ? "starter" : selectedPlan;
+      
       // Créer le workspace dans Firestore
       const workspaceRef = doc(db, "workspaces", `${user.uid}_default`);
       await setDoc(workspaceRef, {
@@ -196,7 +206,7 @@ export default function OnboardingPage() {
         type: workspaceType,
         timezone: timezone,
         ownerId: user.uid,
-        plan: selectedPlan,
+        plan: finalPlan,
         paymentStatus: promoCodeApplied ? "free" : (hasPaid ? "active" : "pending"),
         promoCode: promoCodeApplied ? promoCode : null,
         createdAt: serverTimestamp(),
@@ -208,11 +218,12 @@ export default function OnboardingPage() {
       });
 
       // Marquer l'onboarding comme complété
+      
       const userRef = doc(db, "users", user.uid);
       await setDoc(userRef, {
         onboardingCompleted: true,
         workspaceId: `${user.uid}_default`,
-        plan: selectedPlan,
+        plan: finalPlan,
         subscriptionStatus: promoCodeApplied ? "active" : (hasPaid ? "active" : "pending"),
         promoCode: promoCodeApplied ? promoCode : null,
         completedAt: serverTimestamp()

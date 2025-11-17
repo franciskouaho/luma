@@ -75,7 +75,13 @@ export function usePlanLimits(): UsePlanLimitsReturn {
       // Récupérer le plan de l'utilisateur
       const userDoc = await getDoc(doc(db, 'users', user.uid));
       const userData = userDoc.data();
-      const userPlan = (userData?.plan || 'starter') as PlanType;
+      
+      // Si l'utilisateur a un code promo beta, forcer le plan starter avec restrictions
+      const hasBetaPromo = userData?.promoCode && 
+        (userData.promoCode.toUpperCase().includes('BETA') || 
+         userData.promoCode.toUpperCase().startsWith('BETA'));
+      
+      const userPlan = hasBetaPromo ? 'starter' : ((userData?.plan || 'starter') as PlanType);
       setPlan(userPlan);
 
       // Récupérer les stats d'utilisation
