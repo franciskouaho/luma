@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { PlatformIcon } from "@/components/ui/platform-icon";
+import { useAuth } from "@/hooks/use-auth";
 
 interface Draft {
   id: string;
@@ -43,6 +44,7 @@ interface Draft {
 }
 
 export default function DraftsPage() {
+  const { user } = useAuth();
   const [drafts, setDrafts] = useState<Draft[]>([]);
   const [loading, setLoading] = useState(true);
   const [sortBy, setSortBy] = useState<string>("newest");
@@ -72,8 +74,15 @@ export default function DraftsPage() {
     };
 
     const fetchAccounts = async () => {
+      if (!user?.uid) return;
+      
       try {
-        const response = await fetch("/api/accounts");
+        const token = await user.getIdToken();
+        const response = await fetch(`/api/accounts?userId=${user.uid}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
         if (response.ok) {
           const data = await response.json();
           setAccounts(data.accounts || []);
@@ -85,7 +94,7 @@ export default function DraftsPage() {
 
     fetchDrafts();
     fetchAccounts();
-  }, []);
+  }, [user]);
 
   const filteredDrafts = drafts
     .filter((draft) => {

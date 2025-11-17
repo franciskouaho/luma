@@ -30,7 +30,7 @@ export function useConnectedAccounts() {
       setError(null);
 
       const token = await user.getIdToken();
-      const response = await fetch('/api/accounts', {
+      const response = await fetch(`/api/accounts?userId=${user.uid}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',

@@ -24,6 +24,7 @@ import {
   List,
 } from "lucide-react";
 import { PlatformIcon } from "@/components/ui/platform-icon";
+import { useAuth } from "@/hooks/use-auth";
 
 interface ScheduledPost {
   id: string;
@@ -35,6 +36,7 @@ interface ScheduledPost {
 }
 
 export default function CalendarPage() {
+  const { user } = useAuth();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<"month" | "week">("month");
   const [scheduledPosts, setScheduledPosts] = useState<ScheduledPost[]>([]);
@@ -145,8 +147,15 @@ export default function CalendarPage() {
     };
 
     const fetchAccounts = async () => {
+      if (!user?.uid) return;
+      
       try {
-        const response = await fetch("/api/accounts");
+        const token = await user.getIdToken();
+        const response = await fetch(`/api/accounts?userId=${user.uid}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
         if (response.ok) {
           const data = await response.json();
           setAccounts(data.accounts || []);
@@ -158,7 +167,7 @@ export default function CalendarPage() {
 
     fetchScheduledPosts();
     fetchAccounts();
-  }, []);
+  }, [user]);
 
   const navigateMonth = (direction: "prev" | "next") => {
     setCurrentDate((prev) => {

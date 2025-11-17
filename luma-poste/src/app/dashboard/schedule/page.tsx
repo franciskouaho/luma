@@ -49,8 +49,15 @@ export default function SchedulePage() {
 
   useEffect(() => {
     const fetchAccounts = async () => {
+      if (!user?.uid) return;
+      
       try {
-        const response = await fetch("/api/accounts");
+        const token = await user.getIdToken();
+        const response = await fetch(`/api/accounts?userId=${user.uid}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
         if (response.ok) {
           const data = await response.json();
           setAccounts(data.accounts || []);
@@ -61,7 +68,7 @@ export default function SchedulePage() {
     };
 
     fetchAccounts();
-  }, []);
+  }, [user]);
 
   const formatDate = (
     dateInput: string | { _seconds: number; _nanoseconds: number },

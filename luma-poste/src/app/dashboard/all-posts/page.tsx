@@ -1,11 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import {
-  Info,
   CheckCircle,
   Camera,
   Video,
@@ -15,22 +11,20 @@ import {
   Send,
   Plus,
   Calendar,
-  TrendingUp,
-  Users,
   Filter,
-  Search,
   Grid3X3,
   List,
   MoreHorizontal,
   Edit3,
-  Trash2,
   Eye,
   Share2,
 } from "lucide-react";
 import { PlatformIcon } from "@/components/ui/platform-icon";
 import Image from "next/image";
+import { useAuth } from "@/hooks/use-auth";
 
 export default function AllPostsPage() {
+  const { user } = useAuth();
   const [schedules, setSchedules] = useState<any[]>([]);
   const [accounts, setAccounts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -45,39 +39,54 @@ export default function AllPostsPage() {
     const fetchData = async () => {
       try {
         // Récupérer les schedules
-        const schedulesResponse = await fetch(
-          "/api/schedules?userId=FGcdXcRXVoVfsSwJIciurCeuCXz1",
-        );
-        if (schedulesResponse.ok) {
-          const schedulesData = await schedulesResponse.json();
-
-          // Convertir les dates Firestore
-          const schedulesWithDates = (schedulesData.schedules || []).map(
-            (schedule: any) => {
-              let scheduledAt;
-              if (schedule.scheduledAt?._seconds) {
-                scheduledAt = new Date(schedule.scheduledAt._seconds * 1000);
-              } else if (schedule.scheduledAt?.toDate) {
-                scheduledAt = schedule.scheduledAt.toDate();
-              } else {
-                scheduledAt = new Date(schedule.scheduledAt);
-              }
-
-              return {
-                ...schedule,
-                scheduledAt,
-              };
-            },
+        if (user?.uid) {
+          const token = await user.getIdToken();
+          const schedulesResponse = await fetch(
+            `/api/schedules?userId=${user.uid}`,
+            {
+              headers: {
+                'Authorization': `Bearer ${token}`,
+              },
+            }
           );
+          if (schedulesResponse.ok) {
+            const schedulesData = await schedulesResponse.json();
 
-          setSchedules(schedulesWithDates);
+            // Convertir les dates Firestore
+            const schedulesWithDates = (schedulesData.schedules || []).map(
+              (schedule: any) => {
+                let scheduledAt;
+                if (schedule.scheduledAt?._seconds) {
+                  scheduledAt = new Date(schedule.scheduledAt._seconds * 1000);
+                } else if (schedule.scheduledAt?.toDate) {
+                  scheduledAt = schedule.scheduledAt.toDate();
+                } else {
+                  scheduledAt = new Date(schedule.scheduledAt);
+                }
+
+                return {
+                  ...schedule,
+                  scheduledAt,
+                };
+              },
+            );
+
+            setSchedules(schedulesWithDates);
+          }
         }
 
         // Récupérer les comptes
-        const accountsResponse = await fetch("/api/accounts");
-        if (accountsResponse.ok) {
-          const accountsData = await accountsResponse.json();
-          setAccounts(accountsData.accounts || []);
+        if (user?.uid) {
+          const token = await user.getIdToken();
+          const accountsResponse = await fetch(`/api/accounts?userId=${user.uid}`, {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+            },
+          });
+          if (accountsResponse.ok) {
+            const accountsData = await accountsResponse.json();
+            setAccounts(accountsData.accounts || []);
+          }
         }
       } catch (error) {
         console.error("Erreur lors du chargement des données:", error);
@@ -87,7 +96,7 @@ export default function AllPostsPage() {
     };
 
     fetchData();
-  }, []);
+  }, [user]);
 
   // Filtrer et trier les schedules
   const filteredSchedules = schedules

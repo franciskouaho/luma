@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { useAuth } from "./use-auth";
 
 export interface TikTokAccount {
   id: string;
@@ -25,6 +26,7 @@ export function useTikTokAccounts({
   userId,
   initialAccounts = [],
 }: UseTikTokAccountsOptions) {
+  const { user } = useAuth();
   const [accounts, setAccounts] = useState<TikTokAccount[]>(initialAccounts);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -34,9 +36,14 @@ export function useTikTokAccounts({
     setLoading(true);
     setError(null);
     try {
+      const token = user ? await user.getIdToken() : null;
       const url = `/api/accounts?userId=${currentUserId}`;
       console.log("🔍 Hook fetchAccounts - calling:", url);
-      const response = await fetch(url);
+      const response = await fetch(url, {
+        headers: token ? {
+          'Authorization': `Bearer ${token}`,
+        } : {},
+      });
       console.log("🔍 Hook fetchAccounts - response status:", response.status);
       if (!response.ok) {
         throw new Error("Failed to fetch TikTok accounts");
@@ -55,7 +62,7 @@ export function useTikTokAccounts({
       setLoading(false);
       console.log("🔍 Hook fetchAccounts - finished");
     }
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     console.log("🔍 Hook useEffect - userId changed:", userId);
