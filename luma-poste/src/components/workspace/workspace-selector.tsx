@@ -80,7 +80,7 @@ export function WorkspaceSelector({
             {selectedWorkspace ? selectedWorkspace.name : 'Sélectionner un workspace'}
           </span>
           {selectedWorkspace && (
-            <Badge className={getRoleColor(selectedWorkspace.memberRole)}>
+            <Badge className={`${getRoleColor(selectedWorkspace.memberRole)} whitespace-nowrap`}>
               {getRoleLabel(selectedWorkspace.memberRole)}
             </Badge>
           )}
@@ -128,7 +128,7 @@ export function WorkspaceSelector({
                           <p className="text-xs text-gray-500 truncate">{workspace.description}</p>
                         )}
                       </div>
-                      <Badge className={getRoleColor(workspace.memberRole)}>
+                      <Badge className={`${getRoleColor(workspace.memberRole)} whitespace-nowrap`}>
                         {getRoleLabel(workspace.memberRole)}
                       </Badge>
                     </div>

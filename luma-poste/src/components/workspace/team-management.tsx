@@ -302,10 +302,10 @@ export function TeamManagement({ workspaceId, currentUserRole }: TeamManagementP
                   </div>
 
                   <div className="flex items-center space-x-3">
-                    <Badge className={`${getRoleColor(member.role)} border-0 shadow-sm`}>
+                    <Badge className={`${getRoleColor(member.role)} border-0 shadow-sm whitespace-nowrap`}>
                       {getRoleLabel(member.role)}
                     </Badge>
-                    <Badge className={`${getStatusColor(member.status)} border-0 shadow-sm`}>
+                    <Badge className={`${getStatusColor(member.status)} border-0 shadow-sm whitespace-nowrap`}>
                       {getStatusLabel(member.status)}
                     </Badge>
 

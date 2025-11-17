@@ -47,7 +47,7 @@ export function WorkspaceHeader() {
               )}
             </div>
           </div>
-          <Badge className={getRoleColor(selectedWorkspace.memberRole)}>
+          <Badge className={`${getRoleColor(selectedWorkspace.memberRole)} whitespace-nowrap`}>
             {getRoleLabel(selectedWorkspace.memberRole)}
           </Badge>
         </div>

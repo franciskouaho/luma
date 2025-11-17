@@ -12,7 +12,7 @@ export default function WaitlistPage() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
-  const [signupsCount, setSignupsCount] = useState(127); // Valeur par défaut
+  const [signupsCount, setSignupsCount] = useState(70); // Valeur par défaut (offset)
 
   // Charger le nombre d'inscriptions au démarrage
   useEffect(() => {
@@ -202,47 +202,77 @@ export default function WaitlistPage() {
                   <div className="w-3 h-3 rounded-full bg-green-400"></div>
                 </div>
                 <div className="flex-1 text-center text-xs text-gray-500">
-                  app.lumapost.fr
+                  lumapost
                 </div>
               </div>
 
-              {/* Mock Content */}
-              <div className="aspect-video bg-gradient-to-br from-purple-50 via-white to-pink-50 p-8">
-                <div className="max-w-3xl mx-auto">
-                  {/* Mock Dashboard */}
-                  <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
-                    <div className="flex items-center justify-between mb-6">
-                      <div className="h-8 bg-gray-200 rounded w-32"></div>
-                      <div className="h-8 bg-purple-200 rounded w-24"></div>
-                    </div>
-
-                    <div className="grid grid-cols-3 gap-4 mb-6">
-                      <div className="bg-gray-50 rounded-lg p-4 h-24"></div>
-                      <div className="bg-purple-50 rounded-lg p-4 h-24"></div>
-                      <div className="bg-pink-50 rounded-lg p-4 h-24"></div>
-                    </div>
-
-                    <div className="space-y-3">
-                      <div className="bg-gray-100 rounded h-16"></div>
-                      <div className="bg-gray-100 rounded h-16"></div>
-                    </div>
-                  </div>
-                </div>
+              {/* Screenshot */}
+              <div className="relative w-full">
+                <Image
+                  src="/luma-waitlist.png"
+                  alt="LumaPost Dashboard Preview"
+                  width={1920}
+                  height={1080}
+                  className="w-full h-auto object-cover"
+                  priority
+                />
               </div>
             </div>
 
             {/* Floating badges */}
-            <div className="absolute -left-4 top-1/4 bg-white rounded-lg shadow-xl border border-gray-200 px-4 py-2 transform -rotate-3">
-              <div className="flex items-center gap-2">
-                <span className="text-2xl">⚡</span>
-                <span className="text-sm font-semibold text-gray-900">Gain de temps</span>
+            <div className="absolute -left-4 top-1/4 bg-white rounded-lg shadow-xl border border-gray-200 px-4 py-3 transform -rotate-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#9B6BFF' }}>
+                  <span className="text-2xl">⚡</span>
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-gray-900">Gain de temps</p>
+                  <span className="inline-block mt-1 px-2 py-0.5 bg-purple-100 text-purple-700 rounded text-xs font-medium">
+                    Publier
+                  </span>
+                </div>
               </div>
             </div>
 
-            <div className="absolute -right-4 top-1/3 bg-white rounded-lg shadow-xl border border-gray-200 px-4 py-2 transform rotate-3">
-              <div className="flex items-center gap-2">
-                <span className="text-2xl">📊</span>
-                <span className="text-sm font-semibold text-gray-900">Analytics</span>
+            <div className="absolute -right-4 top-1/4 bg-white rounded-lg shadow-xl border border-gray-200 px-4 py-3 transform rotate-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#10B981' }}>
+                  <span className="text-2xl">🚀</span>
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-gray-900">Programmation</p>
+                  <span className="inline-block mt-1 px-2 py-0.5 bg-green-100 text-green-700 rounded text-xs font-medium">
+                    Auto-post
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="absolute -left-6 bottom-1/4 bg-white rounded-lg shadow-xl border border-gray-200 px-4 py-3 transform rotate-2">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#F97316' }}>
+                  <span className="text-2xl">📊</span>
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-gray-900">Analytics</p>
+                  <span className="inline-block mt-1 px-2 py-0.5 bg-orange-100 text-orange-700 rounded text-xs font-medium">
+                    Stats
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="absolute -right-6 bottom-1/3 bg-white rounded-lg shadow-xl border border-gray-200 px-4 py-3 transform -rotate-2">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#EC4899' }}>
+                  <span className="text-2xl">🎯</span>
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-gray-900">Multi-comptes</p>
+                  <span className="inline-block mt-1 px-2 py-0.5 bg-pink-100 text-pink-700 rounded text-xs font-medium">
+                    TikTok
+                  </span>
+                </div>
               </div>
             </div>
           </div>
