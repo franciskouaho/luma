@@ -12,7 +12,7 @@ export default function WaitlistPage() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
-  const [signupsCount, setSignupsCount] = useState(70); // Valeur par défaut (offset)
+  const [signupsCount, setSignupsCount] = useState(130); // Valeur par défaut (offset)
 
   // Charger le nombre d'inscriptions au démarrage
   useEffect(() => {

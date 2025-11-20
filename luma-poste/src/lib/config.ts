@@ -7,6 +7,6 @@ export const APP_CONFIG = {
   waitlist: {
     signupsCount: 127, // Nombre d'inscrits (à mettre à jour)
     launchDate: "Janvier 2026", // Date de lancement prévue
-    offset: 70, // Offset ajouté au nombre réel d'inscriptions Firebase
+    offset: 130, // Offset ajouté au nombre réel d'inscriptions Firebase
   }
 } as const;
