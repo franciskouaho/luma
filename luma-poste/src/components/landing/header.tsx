@@ -49,13 +49,8 @@ export default function LandingHeader() {
           {/* Auth Buttons */}
           <div className="hidden md:flex items-center gap-3">
             <Link href="/auth">
-              <Button variant="ghost" className="text-gray-700 hover:text-gray-900 text-sm font-medium">
-                Se connecter
-              </Button>
-            </Link>
-            <Link href="/auth">
-              <Button className="text-white text-sm font-medium px-6 py-2 rounded-lg transition-all hover:opacity-90" style={{ backgroundColor: '#9B6BFF' }}>
-                S&apos;inscrire
+              <Button className="text-white text-sm font-medium px-6 py-2 rounded-lg transition-all hover:opacity-90 shadow-md hover:shadow-lg" style={{ backgroundColor: '#9B6BFF' }}>
+                Essayer maintenant
               </Button>
             </Link>
           </div>
@@ -92,13 +87,8 @@ export default function LandingHeader() {
               </Link>
               <div className="pt-4 flex flex-col gap-2">
                 <Link href="/auth">
-                  <Button variant="ghost" className="w-full">
-                    Se connecter
-                  </Button>
-                </Link>
-                <Link href="/auth">
-                  <Button className="w-full" style={{ backgroundColor: '#9B6BFF', color: 'white' }}>
-                    S&apos;inscrire
+                  <Button className="w-full shadow-md" style={{ backgroundColor: '#9B6BFF', color: 'white' }}>
+                    Essayer maintenant
                   </Button>
                 </Link>
               </div>
