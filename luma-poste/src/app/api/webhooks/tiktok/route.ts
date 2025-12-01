@@ -106,37 +106,69 @@ export async function POST(request: NextRequest) {
     // Mettre à jour le statut du schedule dans Firestore
     try {
       // Chercher le schedule par publishId
-      // D'abord essayer de trouver par publishId exact
       let schedule = null;
       
-      // Recherche globale par publishId (plus efficace)
+      // Recherche globale par publishId exact
       try {
         const allSchedules = await scheduleService.getAll();
         schedule = allSchedules.find(s => s.publishId === publish_id);
         
         if (schedule) {
+          console.log('✅ Schedule trouvé par publishId exact:', schedule.id);
         }
       } catch (globalSearchError) {
-        
-        // Fallback: recherche par userId si disponible
-        if (user_id) {
-          const schedules = await scheduleService.getByUserId(user_id);
-          schedule = schedules.find(s => s.publishId === publish_id);
+        console.error('Erreur lors de la recherche globale:', globalSearchError);
+      }
+      
+      // Si pas trouvé, essayer avec des variantes du publish_id
+      if (!schedule) {
+        try {
+          const allSchedules = await scheduleService.getAll();
+          
+          // Essayer différentes variantes du publish_id
+          schedule = allSchedules.find(s => {
+            if (!s.publishId) return false;
+            
+            // Comparaison exacte
+            if (s.publishId === publish_id) return true;
+            
+            // Comparaison avec partie après ~
+            const publishIdPart = publish_id.split('~')[1];
+            if (publishIdPart && s.publishId.includes(publishIdPart)) return true;
+            
+            // Comparaison avec partie avant ~
+            const publishIdPrefix = publish_id.split('~')[0];
+            if (publishIdPrefix && s.publishId.includes(publishIdPrefix)) return true;
+            
+            return false;
+          });
+          
+          if (schedule) {
+            console.log('✅ Schedule trouvé par variante du publishId:', schedule.id);
+          }
+        } catch (searchError) {
+          console.error('Erreur lors de la recherche par variante:', searchError);
         }
       }
       
-      // Si toujours pas trouvé, essayer d'autres critères
-      if (!schedule) {
-        const allSchedules = await scheduleService.getAll();
-        
-        schedule = allSchedules.find(s => 
-          s.tiktokUrl?.includes(publish_id) || 
-          s.id === publish_id ||
-          s.videoId === publish_id ||
-          s.publishId?.includes(publish_id.split('~')[1]) // Partie après le ~
-        );
-        
-        if (schedule) {
+      // Fallback: recherche par userId si disponible (pour les publications récentes)
+      if (!schedule && user_id) {
+        try {
+          const schedules = await scheduleService.getByUserId(user_id);
+          // Prendre le schedule le plus récent avec statut 'queued' ou 'scheduled'
+          schedule = schedules
+            .filter(s => s.status === 'queued' || s.status === 'scheduled')
+            .sort((a, b) => {
+              const aTime = a.scheduledAt?.toMillis() || 0;
+              const bTime = b.scheduledAt?.toMillis() || 0;
+              return bTime - aTime;
+            })[0];
+          
+          if (schedule) {
+            console.log('✅ Schedule trouvé par userId (plus récent):', schedule.id);
+          }
+        } catch (userIdSearchError) {
+          console.error('Erreur lors de la recherche par userId:', userIdSearchError);
         }
       }
 
@@ -172,7 +204,7 @@ export async function POST(request: NextRequest) {
         });
 
         // Log de la mise à jour réussie
-        console.log('Schedule mis à jour avec succès:', {
+        console.log('✅ Schedule mis à jour avec succès:', {
           id: schedule.id,
           newStatus,
           tiktokUrl,
@@ -180,7 +212,15 @@ export async function POST(request: NextRequest) {
         });
 
       } else {
-        console.log('Aucun schedule trouvé pour la mise à jour');
+        // Pour les publications immédiates (non planifiées), c'est normal de ne pas trouver de schedule
+        // Le webhook est reçu mais le post a déjà été traité côté client via polling
+        if (eventType === 'post.publish.complete' || eventType === 'post.publish.success') {
+          // Log silencieux pour les publications immédiates - c'est normal
+          // Le statut est déjà géré via le polling côté client
+        } else {
+          // Seulement logger pour les autres types d'événements qui devraient avoir un schedule
+          console.log('⚠️ Aucun schedule trouvé pour la mise à jour - publish_id:', publish_id, 'event:', eventType);
+        }
       }
 
     } catch (updateError) {
