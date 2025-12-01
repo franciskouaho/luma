@@ -54,12 +54,12 @@ interface TikTokSettingsProps {
 }
 
 const DEFAULT_SETTINGS: TikTokPostSettings = {
-  privacyLevel: "PUBLIC_TO_EVERYONE",
-  allowComments: true,
-  allowDuet: true,
-  allowStitch: true,
+  privacyLevel: null, // REQUIRED: No default value - user must manually select
+  allowComments: false, // REQUIRED: Must be unchecked by default
+  allowDuet: false, // REQUIRED: Must be unchecked by default
+  allowStitch: false, // REQUIRED: Must be unchecked by default
   commercialContent: {
-    enabled: true,
+    enabled: false, // REQUIRED: Must be off by default
     yourBrand: false,
     brandedContent: false,
   },
@@ -75,16 +75,17 @@ export default function TikTokSettings({
   const [settings, setSettings] = useState<TikTokPostSettings>({
     ...DEFAULT_SETTINGS,
     ...initialSettings,
-    // Enable interactions by default
-    allowComments: true,
-    allowDuet: true,
-    allowStitch: true,
   });
   const consentAccepted = true; // Always accepted since consent section is removed
   const initialSettingsSnapshot = useRef<string | null>(null);
 
   const creatorCanPost = true; // Always allow posting
-  const commercialSelectionValid = true; // Always valid since switches can be on/off independently
+
+  // REQUIRED: If commercial content toggle is ON, at least one option must be selected
+  const commercialSelectionValid = useMemo(() => {
+    if (!settings.commercialContent.enabled) return true;
+    return settings.commercialContent.yourBrand || settings.commercialContent.brandedContent;
+  }, [settings.commercialContent.enabled, settings.commercialContent.yourBrand, settings.commercialContent.brandedContent]);
 
   const brandedContentPrivacyValid = useMemo(() => {
     if (!settings.commercialContent.brandedContent) return true;
@@ -123,11 +124,6 @@ export default function TikTokSettings({
     (override?: Partial<TikTokPostSettings>) => {
       const merged: TikTokPostSettings = {
         ...DEFAULT_SETTINGS,
-        // Enable interactions by default
-        allowComments: true,
-        allowDuet: true,
-        allowStitch: true,
-        privacyLevel: "PUBLIC_TO_EVERYONE",
         ...(initialSettings ?? {}),
         ...(override ?? {}),
       };
@@ -157,12 +153,13 @@ export default function TikTokSettings({
 
   useEffect(() => {
     if (!creatorInfo) return;
+    // If interactions are disabled in TikTok app settings, force them to false
     setSettings((prev) => {
       const next: TikTokPostSettings = {
         ...prev,
-        allowComments: creatorInfo.comment_disabled ? false : true,
-        allowDuet: creatorInfo.duet_disabled ? false : true,
-        allowStitch: creatorInfo.stitch_disabled ? false : true,
+        allowComments: creatorInfo.comment_disabled ? false : prev.allowComments,
+        allowDuet: creatorInfo.duet_disabled ? false : prev.allowDuet,
+        allowStitch: creatorInfo.stitch_disabled ? false : prev.allowStitch,
       };
       if (
         next.allowComments === prev.allowComments &&
@@ -241,11 +238,11 @@ export default function TikTokSettings({
               </Label>
             </div>
             <Select
-              value={settings.privacyLevel ?? "PUBLIC_TO_EVERYONE"}
+              value={settings.privacyLevel ?? undefined}
               onValueChange={handlePrivacyChange}
             >
               <SelectTrigger className="mt-3 h-11 rounded-xl border border-slate-200 bg-white text-sm max-w-xs">
-                <SelectValue placeholder="Public" />
+                <SelectValue placeholder="Select privacy level" />
               </SelectTrigger>
               <SelectContent className="rounded-xl border border-slate-100 bg-white">
                 {!creatorInfo?.privacy_level_options && (
@@ -321,7 +318,7 @@ export default function TikTokSettings({
               Allow users to
             </Label>
             <p className="mt-1 text-xs text-slate-500">
-              Activez les interactions souhaitées (tout est coché par défaut).
+              Manually enable the interactions you want to allow (all are unchecked by default).
             </p>
             <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
@@ -424,72 +421,133 @@ export default function TikTokSettings({
             </div>
           </section>
 
-          {/* Section Branded Content - Layout horizontal */}
+          {/* Section Disclose Video Content - REQUIRED BY TIKTOK */}
           <section className="rounded-2xl border border-slate-100 bg-white px-4 py-4 space-y-4">
             <div>
-              <Label className="text-sm font-medium text-slate-900 mb-3 block">
-                Disclose Branded Content
-              </Label>
-              <p className="text-xs text-slate-500 mb-4">
-                Indique si ce contenu est un partenariat rémunéré.
-              </p>
-
-              {/* Layout horizontal pour les deux options */}
-              <div className="grid gap-3 sm:grid-cols-2">
-                {/* Your Brand */}
-                <div className="flex items-center justify-between p-3 rounded-xl border-2 border-slate-200 bg-white">
-                  <div>
-                    <Label
-                      htmlFor="commercial-your-brand"
-                      className="text-sm font-medium text-slate-900"
-                    >
-                      Promote Your Own Brand
-                    </Label>
-                    <p className="text-xs text-slate-500">
-                      Labeled as 'Promotional content'
-                    </p>
-                  </div>
-                  <Switch
-                    id="commercial-your-brand"
-                    checked={settings.commercialContent.yourBrand}
-                    onCheckedChange={(checked) =>
-                      handleCheckboxChange("yourBrand", !!checked)
-                    }
-                  />
+              {/* Main Toggle - OFF by default (REQUIRED) */}
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <Label className="text-sm font-medium text-slate-900">
+                    Disclose video content
+                  </Label>
+                  <p className="text-xs text-slate-500 mt-1">
+                    Turn on to disclose that this video promotes goods or services in exchange for something of value. Your video could promote yourself, a third party, or both.
+                  </p>
                 </div>
-
-                {/* Branded Content */}
-                <div className="flex items-center justify-between p-3 rounded-xl border-2 border-slate-200 bg-white">
-                  <div>
-                    <Label
-                      htmlFor="commercial-branded-content"
-                      className="text-sm font-medium text-slate-900"
-                    >
-                      Disclose Branded Content
-                    </Label>
-                    <p className="text-xs text-slate-500">
-                      Labeled as 'Paid partnership'
-                    </p>
-                  </div>
-                  <Switch
-                    id="commercial-branded-content"
-                    checked={settings.commercialContent.brandedContent}
-                    onCheckedChange={(checked) =>
-                      handleCheckboxChange("brandedContent", !!checked)
-                    }
-                  />
-                </div>
+                <Switch
+                  id="commercial-content-toggle"
+                  checked={settings.commercialContent.enabled}
+                  onCheckedChange={(checked) =>
+                    setSettings((prev) => ({
+                      ...prev,
+                      commercialContent: {
+                        ...prev.commercialContent,
+                        enabled: !!checked,
+                        // Reset selections when toggling off
+                        yourBrand: !!checked && prev.commercialContent.yourBrand,
+                        brandedContent: !!checked && prev.commercialContent.brandedContent,
+                      },
+                    }))
+                  }
+                />
               </div>
 
-              {/* Messages de validation */}
-              <div className="mt-4 space-y-2">
-                {settings.commercialContent.yourBrand &&
-                  settings.commercialContent.brandedContent && (
-                    <p className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600">
-                      Your photo/video will be labeled as 'Paid partnership'
-                    </p>
+              {/* Checkboxes - Only shown when toggle is ON */}
+              {settings.commercialContent.enabled && (
+                <div className="space-y-3">
+                  <div className="pl-4 border-l-2 border-blue-200 space-y-3">
+                    {/* Your Brand Checkbox */}
+                    <div className="flex items-start gap-3 p-3 rounded-xl border border-slate-200 bg-slate-50">
+                      <Checkbox
+                        id="commercial-your-brand"
+                        checked={settings.commercialContent.yourBrand}
+                        onCheckedChange={(checked) =>
+                          handleCheckboxChange("yourBrand", !!checked)
+                        }
+                      />
+                      <div className="flex-1">
+                        <Label
+                          htmlFor="commercial-your-brand"
+                          className="text-sm font-medium text-slate-900 cursor-pointer"
+                        >
+                          Your brand
+                        </Label>
+                        <p className="text-xs text-slate-500 mt-0.5">
+                          You are promoting yourself or your own business. This video will be classified as Brand Organic.
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Branded Content Checkbox */}
+                    <div className="flex items-start gap-3 p-3 rounded-xl border border-slate-200 bg-slate-50">
+                      <Checkbox
+                        id="commercial-branded-content"
+                        checked={settings.commercialContent.brandedContent}
+                        onCheckedChange={(checked) =>
+                          handleCheckboxChange("brandedContent", !!checked)
+                        }
+                        disabled={settings.privacyLevel === "SELF_ONLY"}
+                      />
+                      <div className="flex-1">
+                        <Label
+                          htmlFor="commercial-branded-content"
+                          className={`text-sm font-medium cursor-pointer ${
+                            settings.privacyLevel === "SELF_ONLY"
+                              ? "text-slate-400"
+                              : "text-slate-900"
+                          }`}
+                        >
+                          Branded content
+                        </Label>
+                        <p className={`text-xs mt-0.5 ${
+                          settings.privacyLevel === "SELF_ONLY"
+                            ? "text-slate-400"
+                            : "text-slate-500"
+                        }`}>
+                          You are promoting another brand or a third party. This video will be classified as Branded Content.
+                        </p>
+                        {settings.privacyLevel === "SELF_ONLY" && (
+                          <p className="text-xs text-amber-600 mt-1">
+                            Branded content visibility cannot be set to private.
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Validation Warning - REQUIRED */}
+                  {!commercialSelectionValid && (
+                    <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2">
+                      <p className="text-xs text-amber-800 font-medium">
+                        ⚠️ You need to indicate if your content promotes yourself, a third party, or both.
+                      </p>
+                    </div>
                   )}
-              </div>
+
+                  {/* Status Messages - REQUIRED BY TIKTOK */}
+                  {settings.commercialContent.yourBrand && !settings.commercialContent.brandedContent && (
+                    <div className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2">
+                      <p className="text-xs text-blue-800">
+                        ℹ️ Your {postType === 'photo' ? 'photo' : 'video'} will be labeled "Promotional content"
+                      </p>
+                    </div>
+                  )}
+                  {!settings.commercialContent.yourBrand && settings.commercialContent.brandedContent && (
+                    <div className="rounded-lg border border-purple-200 bg-purple-50 px-3 py-2">
+                      <p className="text-xs text-purple-800">
+                        ℹ️ Your {postType === 'photo' ? 'photo' : 'video'} will be labeled "Paid partnership"
+                      </p>
+                    </div>
+                  )}
+                  {settings.commercialContent.yourBrand && settings.commercialContent.brandedContent && (
+                    <div className="rounded-lg border border-purple-200 bg-purple-50 px-3 py-2">
+                      <p className="text-xs text-purple-800">
+                        ℹ️ Your {postType === 'photo' ? 'photo' : 'video'} will be labeled "Paid partnership"
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </section>
         </div>

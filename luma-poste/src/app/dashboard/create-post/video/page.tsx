@@ -53,13 +53,15 @@ interface Platform {
   accountId?: string;
 }
 
+// REQUIRED BY TIKTOK: All interaction settings must be OFF by default
+// Privacy level must have NO default value (user must manually select)
 const DEFAULT_TIKTOK_SETTINGS: TikTokPostSettings = {
-  privacyLevel: "PUBLIC_TO_EVERYONE",
-  allowComments: true,
-  allowDuet: true,
-  allowStitch: true,
+  privacyLevel: null, // REQUIRED: No default value - user must manually select
+  allowComments: false, // REQUIRED: Must be unchecked by default
+  allowDuet: false, // REQUIRED: Must be unchecked by default
+  allowStitch: false, // REQUIRED: Must be unchecked by default
   commercialContent: {
-    enabled: true,
+    enabled: false, // REQUIRED: Must be off by default
     yourBrand: false,
     brandedContent: false,
   },
@@ -67,10 +69,6 @@ const DEFAULT_TIKTOK_SETTINGS: TikTokPostSettings = {
 
 const getResetTikTokSettings = (): TikTokPostSettings => ({
   ...DEFAULT_TIKTOK_SETTINGS,
-  privacyLevel: "PUBLIC_TO_EVERYONE",
-  allowComments: true,
-  allowDuet: true,
-  allowStitch: true,
 });
 
 function CreateVideoPostPageContent() {
@@ -1416,6 +1414,30 @@ function CreateVideoPostPageContent() {
     return () => window.clearInterval(intervalId);
   }, [primaryActionInFlight]);
 
+  // REQUIRED BY TIKTOK: Generate compliance declaration text based on commercial content
+  const getTikTokComplianceText = () => {
+    const currentSettings = tiktokSettingsRef.current;
+    const hasCommercialContent = currentSettings.commercialContent.enabled &&
+      (currentSettings.commercialContent.yourBrand || currentSettings.commercialContent.brandedContent);
+
+    if (!hasCommercialContent) {
+      // No commercial content
+      return "By posting, you agree to TikTok's Music Usage Confirmation";
+    }
+
+    const onlyYourBrand = currentSettings.commercialContent.yourBrand && !currentSettings.commercialContent.brandedContent;
+    const onlyBrandedContent = !currentSettings.commercialContent.yourBrand && currentSettings.commercialContent.brandedContent;
+    const both = currentSettings.commercialContent.yourBrand && currentSettings.commercialContent.brandedContent;
+
+    if (onlyYourBrand) {
+      return "By posting, you agree to TikTok's Music Usage Confirmation";
+    } else if (onlyBrandedContent || both) {
+      return "By posting, you agree to TikTok's Branded Content Policy and Music Usage Confirmation";
+    }
+
+    return "By posting, you agree to TikTok's Music Usage Confirmation";
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Modern Header with Sticky Navigation */}
@@ -2164,6 +2186,42 @@ function CreateVideoPostPageContent() {
                     <p className="text-xs text-purple-700">
                       Your post will be published at {scheduleTime} (local time)
                     </p>
+                  </div>
+                </div>
+              )}
+
+              {/* REQUIRED BY TIKTOK: Music Usage Confirmation Declaration */}
+              {selectedTikTokAccountId && (
+                <div className="mb-6">
+                  <div className="flex items-start gap-2 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                    <Info className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                    <div className="text-xs text-blue-800 leading-relaxed">
+                      <p>By posting, you agree to TikTok's{" "}
+                        {tiktokSettingsRef.current.commercialContent.enabled &&
+                         (tiktokSettingsRef.current.commercialContent.brandedContent ||
+                          (tiktokSettingsRef.current.commercialContent.yourBrand && tiktokSettingsRef.current.commercialContent.brandedContent)) && (
+                          <>
+                            <a
+                              href="https://www.tiktok.com/legal/page/row/bc-policy/en"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="underline hover:text-blue-900 font-medium"
+                            >
+                              Branded Content Policy
+                            </a>
+                            {" "}and{" "}
+                          </>
+                        )}
+                        <a
+                          href="https://www.tiktok.com/legal/page/row/music-usage-confirmation/en"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="underline hover:text-blue-900 font-medium"
+                        >
+                          Music Usage Confirmation
+                        </a>
+                      </p>
+                    </div>
                   </div>
                 </div>
               )}
