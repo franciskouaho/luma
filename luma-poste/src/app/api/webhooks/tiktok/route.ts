@@ -159,8 +159,25 @@ export async function POST(request: NextRequest) {
           schedule = schedules
             .filter(s => s.status === 'queued' || s.status === 'scheduled')
             .sort((a, b) => {
-              const aTime = a.scheduledAt?.toMillis() || 0;
-              const bTime = b.scheduledAt?.toMillis() || 0;
+              // scheduledAt peut être FieldValue ou Timestamp
+              const getTime = (scheduledAt: any): number => {
+                if (!scheduledAt) return 0;
+                // Si c'est un Timestamp Firestore
+                if (typeof scheduledAt.toMillis === 'function') {
+                  return scheduledAt.toMillis();
+                }
+                // Si c'est un Date
+                if (scheduledAt instanceof Date) {
+                  return scheduledAt.getTime();
+                }
+                // Si c'est un nombre (timestamp)
+                if (typeof scheduledAt === 'number') {
+                  return scheduledAt;
+                }
+                return 0;
+              };
+              const aTime = getTime(a.scheduledAt);
+              const bTime = getTime(b.scheduledAt);
               return bTime - aTime;
             })[0];
           
