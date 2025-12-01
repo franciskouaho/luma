@@ -873,8 +873,10 @@ Erreur TikTok: ${errorData.error?.message || "Compte non autorisé"}`);
       const statusUrl =
         "https://open.tiktokapis.com/v2/post/publish/status/fetch/";
 
+      // Réduire le polling pour éviter les timeouts (max 3 tentatives = 30s)
+      // Le webhook TikTok mettra à jour le statut final
       let attempts = 0;
-      const maxAttempts = 30; // Attente standard pour FILE_UPLOAD
+      const maxAttempts = 3; // Réduit pour éviter timeout API route
 
       while (attempts < maxAttempts) {
         const statusResponse = await fetch(statusUrl, {
@@ -908,9 +910,13 @@ Erreur TikTok: ${errorData.error?.message || "Compte non autorisé"}`);
         finalStatus = status;
 
         if (status === "PROCESSING_DOWNLOAD") {
+          console.log("📥 TikTok télécharge la vidéo...");
         } else if (status === "PROCESSING_UPLOAD") {
+          console.log("📤 TikTok traite l'upload...");
         } else if (status === "PROCESSING_POST") {
+          console.log("🔄 TikTok finalise la publication...");
         } else if (status === "PUBLISHED") {
+          console.log("✅ Publication confirmée par TikTok");
           break;
         } else if (status === "FAILED") {
           console.error(
@@ -924,14 +930,14 @@ Erreur TikTok: ${errorData.error?.message || "Compte non autorisé"}`);
 
         attempts++;
         if (attempts < maxAttempts) {
-          const waitTime = 10000; // 10s d'attente standard pour FILE_UPLOAD
+          const waitTime = 10000; // 10s d'attente
           await new Promise((resolve) => setTimeout(resolve, waitTime));
         }
       }
 
       if (finalStatus !== "PUBLISHED") {
-        console.warn(
-          `⚠️ Publication non confirmée après ${maxAttempts} tentatives. Statut final: ${finalStatus}`,
+        console.log(
+          `ℹ️ Publication en cours de traitement (${finalStatus}). Le webhook TikTok mettra à jour le statut final.`,
         );
       }
     }

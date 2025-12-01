@@ -238,11 +238,18 @@ export default function TikTokSettings({
               </Label>
             </div>
             <Select
-              value={settings.privacyLevel ?? undefined}
+              value={settings.privacyLevel || ""}
               onValueChange={handlePrivacyChange}
             >
               <SelectTrigger className="mt-3 h-11 rounded-xl border border-slate-200 bg-white text-sm max-w-xs">
-                <SelectValue placeholder="Select privacy level" />
+                <SelectValue placeholder="Select privacy level">
+                  {settings.privacyLevel ? (
+                    settings.privacyLevel === "PUBLIC_TO_EVERYONE" ? "Public" :
+                    settings.privacyLevel === "SELF_ONLY" ? "Private (Only me)" :
+                    settings.privacyLevel === "MUTUAL_FOLLOW_FRIENDS" ? "Friends" :
+                    settings.privacyLevel
+                  ) : "Select privacy level"}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent className="rounded-xl border border-slate-100 bg-white">
                 {!creatorInfo?.privacy_level_options && (

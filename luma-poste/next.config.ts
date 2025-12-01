@@ -11,6 +11,12 @@ const nextConfig: NextConfig = {
     // your project has type errors.
     ignoreBuildErrors: false,
   },
+  // Augmenter le timeout pour les API routes (notamment pour l'upload TikTok)
+  experimental: {
+    serverActions: {
+      bodySizeLimit: '10mb',
+    },
+  },
   images: {
     remotePatterns: [
       {

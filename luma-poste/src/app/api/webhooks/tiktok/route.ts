@@ -5,7 +5,7 @@ import { FieldValue } from 'firebase-admin/firestore';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    
+
     // Log du webhook reçu
     console.log('Webhook TikTok reçu:', {
       headers: Object.fromEntries(request.headers.entries()),
@@ -22,8 +22,13 @@ export async function POST(request: NextRequest) {
     }
 
     // Extraire les données du webhook
-    let publish_id, status, error_message, video_id, share_url, user_id;
-    
+    let publish_id: string | undefined;
+    let status: string | undefined;
+    let error_message: string | undefined;
+    let video_id: string | undefined;
+    let share_url: string | undefined;
+    let user_id: string | undefined;
+
     // TikTok envoie les données dans différents formats selon le type d'événement
     if (body.content && typeof body.content === 'string') {
       // Format inbox: content contient le JSON stringifié
@@ -82,7 +87,7 @@ export async function POST(request: NextRequest) {
     // Gérer les différents types d'événements TikTok
     const eventType = body.event;
     let finalStatus = status;
-    
+
     switch (eventType) {
       case 'post.publish.inbox_delivered':
         // La vidéo a été livrée dans la boîte de réception TikTok

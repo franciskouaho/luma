@@ -3,6 +3,9 @@ import { scheduleService, TikTokAccountService } from '@/lib/firestore';
 import { tiktokAPIService } from '@/lib/tiktok-api';
 import { FieldValue } from 'firebase-admin/firestore';
 
+// Configuration du timeout pour cette route (300 secondes = 5 minutes)
+export const maxDuration = 300;
+
 export async function POST(request: NextRequest) {
   try {
     const { 
