@@ -103,6 +103,21 @@ export interface WorkspaceInvitation {
   updatedAt: FieldValue;
 }
 
+export interface SocialAccount {
+  id: string;
+  workspaceId: string;
+  platform: "tiktok" | "instagram" | "youtube" | "facebook" | "twitter" | "linkedin" | "autre";
+  accountName: string;
+  username: string;
+  email?: string;
+  password?: string; // Crypté
+  notes?: string;
+  addedBy: string;
+  addedByName: string;
+  createdAt: FieldValue;
+  updatedAt: FieldValue;
+}
+
 export interface UserSettings {
   id: string;
   userId: string;
@@ -702,6 +717,59 @@ export class WorkspaceInvitationService {
   }
 }
 
+// Service pour les comptes sociaux partagés
+export class SocialAccountService {
+  private collection = "socialAccounts";
+
+  async create(
+    account: Omit<SocialAccount, "id" | "createdAt" | "updatedAt">,
+  ): Promise<string> {
+    const now = FieldValue.serverTimestamp();
+    const docRef = await adminDb.collection(this.collection).add({
+      ...account,
+      createdAt: now,
+      updatedAt: now,
+    });
+    return docRef.id;
+  }
+
+  async getByWorkspaceId(workspaceId: string): Promise<SocialAccount[]> {
+    const q = adminDb
+      .collection(this.collection)
+      .where("workspaceId", "==", workspaceId)
+      .orderBy("createdAt", "desc");
+
+    const querySnapshot = await q.get();
+    return querySnapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    })) as SocialAccount[];
+  }
+
+  async getById(id: string): Promise<SocialAccount | null> {
+    const docRef = adminDb.collection(this.collection).doc(id);
+    const docSnap = await docRef.get();
+
+    if (docSnap.exists) {
+      return { id: docSnap.id, ...docSnap.data() } as SocialAccount;
+    }
+    return null;
+  }
+
+  async update(id: string, updates: Partial<SocialAccount>): Promise<void> {
+    const docRef = adminDb.collection(this.collection).doc(id);
+    await docRef.update({
+      ...updates,
+      updatedAt: FieldValue.serverTimestamp(),
+    });
+  }
+
+  async delete(id: string): Promise<void> {
+    const docRef = adminDb.collection(this.collection).doc(id);
+    await docRef.delete();
+  }
+}
+
 // Instances des services
 export const videoService = new VideoService();
 export const scheduleService = new ScheduleService();
@@ -711,3 +779,4 @@ export const workspaceMemberService = new WorkspaceMemberService();
 export const workspaceInvitationService = new WorkspaceInvitationService();
 export const userService = new UserService();
 export const userSettingsService = new UserSettingsService();
+export const socialAccountService = new SocialAccountService();
