@@ -118,7 +118,10 @@ export default function SocialAccountsPage() {
         resetForm();
       }
     } else {
-      const success = await addAccount(formData);
+      const success = await addAccount({
+        ...formData,
+        workspaceId: selectedWorkspace?.id || "",
+      });
       if (success) {
         toast({
           title: "Compte ajouté",
