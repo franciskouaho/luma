@@ -2,13 +2,32 @@
 
 import { Check, Play } from "lucide-react";
 import { motion } from "framer-motion";
+import { useState, useRef } from "react";
 
 export default function DemoVideoSection() {
+  const [isPlaying, setIsPlaying] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+
   const features = [
     "Tour complet de l'interface",
     "Démonstration de publication multi-plateforme",
     "Gestion du calendrier et programmation"
   ];
+
+  const handlePlayClick = () => {
+    if (videoRef.current) {
+      if (isPlaying) {
+        videoRef.current.pause();
+      } else {
+        videoRef.current.play();
+      }
+      setIsPlaying(!isPlaying);
+    }
+  };
+
+  const handleVideoEnd = () => {
+    setIsPlaying(false);
+  };
 
   return (
     <section className="py-24 bg-gray-50 relative overflow-hidden">
@@ -65,7 +84,7 @@ export default function DemoVideoSection() {
             </ul>
           </motion.div>
 
-          {/* Right Column - Video Placeholder */}
+          {/* Right Column - Video Player */}
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             whileInView={{ opacity: 1, scale: 1 }}
@@ -73,47 +92,73 @@ export default function DemoVideoSection() {
             transition={{ duration: 0.6 }}
             className="relative"
           >
-            <div className="relative bg-gray-900 rounded-2xl overflow-hidden shadow-2xl border border-gray-800 group cursor-pointer">
-              {/* Video Container */}
-              <div className="aspect-video bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center relative overflow-hidden">
-                {/* Abstract Background in Video */}
-                <div className="absolute inset-0 opacity-30">
-                  <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_50%_50%,_rgba(155,107,255,0.2),transparent_70%)]" />
+            {/* Browser Window Container */}
+            <div className="relative rounded-2xl overflow-hidden shadow-2xl bg-white group">
+              {/* Browser Header */}
+              <div className="bg-gradient-to-r from-gray-100 to-gray-50 px-4 py-3 border-b border-gray-200 flex items-center justify-between">
+                <div className="flex gap-2">
+                  <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                  <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+                  <div className="w-3 h-3 rounded-full bg-green-500"></div>
                 </div>
-
-                {/* Play Button */}
-                <div className="relative z-10 w-24 h-24 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center transition-all duration-300 group-hover:scale-110 group-hover:bg-white/20 border border-white/20">
-                  <div className="w-16 h-16 rounded-full bg-[#9B6BFF] flex items-center justify-center shadow-lg shadow-purple-500/30">
-                    <Play className="w-6 h-6 text-white fill-current ml-1" />
-                  </div>
+                <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-2 bg-white px-4 py-1.5 rounded-lg border border-gray-200 shadow-sm">
+                  <div className="w-3 h-3 rounded-full bg-gray-300"></div>
+                  <span className="text-xs text-gray-600 font-medium">lumapost.app/demo</span>
                 </div>
-
-                {/* Duration Badge */}
-                <div className="absolute bottom-4 right-4 bg-black/60 backdrop-blur-md text-white px-3 py-1.5 rounded-lg text-sm font-medium border border-white/10">
-                  2:30
-                </div>
-
-                {/* Title Overlay */}
-                <div className="absolute top-4 left-4 bg-black/60 backdrop-blur-md text-white px-4 py-2 rounded-lg text-sm font-medium border border-white/10">
-                  Démo complète de LumaPost
-                </div>
+                <div className="w-20"></div>
               </div>
 
-              {/* Mockup Interface Below Video */}
-              <div className="p-4 bg-gray-900 border-t border-gray-800">
-                <div className="flex items-center justify-between">
-                  <div className="flex gap-2">
-                    <div className="w-3 h-3 rounded-full bg-red-500/80"></div>
-                    <div className="w-3 h-3 rounded-full bg-yellow-500/80"></div>
-                    <div className="w-3 h-3 rounded-full bg-green-500/80"></div>
+              {/* Video Container */}
+              <div className="relative aspect-video bg-white flex items-center justify-center overflow-hidden">
+                {/* Video Element */}
+                <video
+                  ref={videoRef}
+                  className="absolute inset-0 w-full h-full object-cover"
+                  onEnded={handleVideoEnd}
+                  onPlay={() => setIsPlaying(true)}
+                  onPause={() => setIsPlaying(false)}
+                  controls={isPlaying}
+                  preload="metadata"
+                >
+                  <source src="/demo.mp4" type="video/mp4" />
+                  Votre navigateur ne supporte pas la lecture de vidéos.
+                </video>
+
+                {/* Overlay when not playing */}
+                {!isPlaying && (
+                  <div className="absolute inset-0 bg-black/5 backdrop-blur-[2px] flex items-center justify-center">
+                    {/* Title Overlay - Top Left */}
+                    <div className="absolute top-6 left-6 bg-gray-900/90 backdrop-blur-md text-white px-4 py-2.5 rounded-xl text-sm font-medium shadow-xl border border-white/10">
+                      Démo complète de LumaPost
+                    </div>
+
+                    {/* Play Button - Center */}
+                    <button
+                      onClick={handlePlayClick}
+                      className="relative z-20 w-28 h-28 rounded-full bg-[#9B6BFF] flex items-center justify-center transition-all duration-300 hover:scale-110 hover:bg-[#8855FF] shadow-2xl shadow-purple-500/40 group-hover:shadow-purple-500/60"
+                      aria-label="Lire la vidéo"
+                    >
+                      <Play className="w-8 h-8 text-white fill-current ml-1.5" />
+                    </button>
+
+                    {/* Duration Badge - Bottom Right */}
+                    <div className="absolute bottom-6 right-6 bg-gray-900/90 backdrop-blur-md text-white px-4 py-2 rounded-xl text-sm font-semibold shadow-xl border border-white/10">
+                      2:30
+                    </div>
                   </div>
-                  <p className="text-xs text-gray-500 font-mono">lumapost.app/demo</p>
-                </div>
+                )}
+              </div>
+
+              {/* Footer with Text */}
+              <div className="bg-white px-6 py-4 border-t border-gray-100">
+                <p className="text-center text-gray-800">
+                  Publier du contenu ne devrait pas être aussi <span className="text-[#9B6BFF] font-semibold">difficile</span>
+                </p>
               </div>
             </div>
 
-            {/* Decorative Blob */}
-            <div className="absolute -inset-4 bg-gradient-to-r from-purple-600 to-pink-600 rounded-[2rem] opacity-20 blur-2xl -z-10 group-hover:opacity-30 transition-opacity duration-500" />
+            {/* Decorative Blur Background */}
+            <div className="absolute -inset-6 bg-gradient-to-r from-purple-400/20 via-pink-400/20 to-purple-400/20 rounded-3xl opacity-40 blur-3xl -z-10 group-hover:opacity-60 transition-opacity duration-500" />
           </motion.div>
         </div>
       </div>
